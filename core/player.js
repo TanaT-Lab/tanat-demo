@@ -243,6 +243,8 @@ function showLayout(layout) {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 async function playIntroContent() {
+    currentStation = 0;
+    
     if (!demoConfig?.intro) {
         transitionToCodeDemo();
         return;
