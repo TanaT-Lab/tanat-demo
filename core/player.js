@@ -15,8 +15,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 let demoConfig = null;          // Loaded demo configuration
-let currentStation = -1;        // -1 = welcome, 0 = intro, 1+ = stations
-let currentLayout = 'welcome';  // 'welcome', 'intro', 'demo'
+let currentStation = -1;        // -1 = transition, 0 = intro, 1+ = stations
+let currentLayout = 'transition';  // 'transition', 'intro', 'demo'
 let isTyping = false;
 let isDisplayComplete = false;
 let isPaused = false;
@@ -26,8 +26,6 @@ let audioElement = null;
 let demoBasePath = '';          // Base path for demo assets
 
 // Timing constants
-const INTRO_SPEED = 60;
-const PAUSE_AFTER_PERIOD = 600;
 const NARRATIVE_TYPING_DELAY = 35;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -80,10 +78,6 @@ function initializePlayer() {
         console.error('No demo config loaded');
         return;
     }
-    
-    // Update welcome screen
-    document.getElementById('demo-description').textContent = demoConfig.description;
-    document.querySelector('.welcome-title').textContent = 'TanaT';
     
     // Update header
     document.getElementById('header-title').textContent = demoConfig.title;
@@ -216,7 +210,6 @@ function showLayout(layout) {
     // Update body class for CSS hiding rules
     document.body.className = `layout-${layout}`;
     
-    const welcomeScreen = document.getElementById('welcome-screen');
     const introScreen = document.getElementById('intro-screen');
     const transitionScreen = document.getElementById('transition-screen');
     const sidebar = document.querySelector('.sidebar');
@@ -224,7 +217,6 @@ function showLayout(layout) {
     const mainContent = document.querySelector('.main-content');
     
     // Hide all
-    if (welcomeScreen) welcomeScreen.style.display = 'none';
     if (introScreen) introScreen.style.display = 'none';
     if (transitionScreen) transitionScreen.style.display = 'none';
     if (sidebar) sidebar.style.display = 'none';
@@ -232,9 +224,6 @@ function showLayout(layout) {
     if (mainContent) mainContent.style.display = 'none';
     
     switch (layout) {
-        case 'welcome':
-            if (welcomeScreen) welcomeScreen.style.display = 'flex';
-            break;
         case 'intro':
             if (introScreen) introScreen.style.display = 'flex';
             break;
@@ -252,32 +241,6 @@ function showLayout(layout) {
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEMO FLOW
 // ═══════════════════════════════════════════════════════════════════════════════
-
-function startDemo() {
-    console.log('Starting demo:', demoConfig?.id);
-    showLayout('intro');
-    currentStation = 0;
-    
-    // Show play overlay and wait for user click
-    showPlayOverlay();
-}
-
-function showPlayOverlay() {
-    const overlay = document.getElementById('play-overlay');
-    const btn = document.getElementById('play-overlay-btn');
-    
-    if (overlay) overlay.style.display = 'flex';
-    
-    if (btn) {
-        btn.onclick = async () => {
-            // Hide overlay immediately
-            if (overlay) overlay.style.display = 'none';
-            
-            // Now start the intro with user interaction context
-            await playIntroContent();
-        };
-    }
-}
 
 async function playIntroContent() {
     if (!demoConfig?.intro) {
@@ -444,46 +407,11 @@ function displayNote(note, notepadEl, vizContainer) {
             notepadEl.appendChild(taglineEl);
             break;
             
-        case 'section':
-            const sectionEl = document.createElement('div');
-            sectionEl.className = 'note-section note-appear';
-            sectionEl.textContent = note.content;
-            notepadEl.appendChild(sectionEl);
-            break;
-            
-        case 'keyword':
-            const keywordEl = document.createElement('div');
-            keywordEl.className = 'note-keyword note-appear';
-            keywordEl.textContent = note.content;
-            notepadEl.appendChild(keywordEl);
-            break;
-            
-        case 'definition':
-            const defEl = document.createElement('div');
-            defEl.className = 'note-definition note-appear';
-            defEl.textContent = note.content;
-            notepadEl.appendChild(defEl);
-            break;
-            
-        case 'example':
-            const exampleEl = document.createElement('span');
-            exampleEl.className = 'note-example note-appear';
-            exampleEl.textContent = note.content;
-            notepadEl.appendChild(exampleEl);
-            break;
-            
         case 'title':
             const titleEl = document.createElement('div');
             titleEl.className = 'note-title note-appear';
             titleEl.innerHTML = note.content;
             notepadEl.appendChild(titleEl);
-            break;
-            
-        case 'subtitle':
-            const subtitleEl = document.createElement('div');
-            subtitleEl.className = 'note-subtitle note-appear';
-            subtitleEl.textContent = note.content;
-            notepadEl.appendChild(subtitleEl);
             break;
             
         case 'bullet':
@@ -493,20 +421,6 @@ function displayNote(note, notepadEl, vizContainer) {
             notepadEl.appendChild(bulletEl);
             break;
             
-        case 'highlight':
-            const highlightEl = document.createElement('div');
-            highlightEl.className = 'note-highlight note-appear';
-            highlightEl.textContent = note.content;
-            notepadEl.appendChild(highlightEl);
-            break;
-            
-        case 'concept':
-            const conceptEl = document.createElement('div');
-            conceptEl.className = 'note-concept note-appear';
-            conceptEl.textContent = note.content;
-            notepadEl.appendChild(conceptEl);
-            break;
-            
         case 'detail':
             const detailEl = document.createElement('div');
             detailEl.className = 'note-detail note-appear';
@@ -514,24 +428,10 @@ function displayNote(note, notepadEl, vizContainer) {
             notepadEl.appendChild(detailEl);
             break;
             
-        case 'action':
-            const actionEl = document.createElement('div');
-            actionEl.className = 'note-action note-appear';
-            actionEl.innerHTML = `<span class="note-icon">▶</span> ${note.content}`;
-            notepadEl.appendChild(actionEl);
-            break;
-            
         case 'divider':
             const dividerEl = document.createElement('div');
             dividerEl.className = 'note-divider note-appear';
             notepadEl.appendChild(dividerEl);
-            break;
-            
-        case 'clear':
-            // Legacy: no longer clears, just adds extra spacing
-            const spacer = document.createElement('div');
-            spacer.className = 'note-spacer';
-            notepadEl.appendChild(spacer);
             break;
             
         case 'svg':
@@ -555,7 +455,7 @@ function displayNote(note, notepadEl, vizContainer) {
     }
     
     // Scroll to bottom of notepad
-    if (note.type !== 'clear' && note.type !== 'svg') {
+    if (note.type !== 'svg') {
         notepadEl.scrollTop = notepadEl.scrollHeight;
     }
 }
@@ -698,37 +598,6 @@ async function typewriter(element, text, speed, sessionId) {
     }
 }
 
-async function typewriterHTML(element, html, sessionId) {
-    element.innerHTML = '';
-    let currentHtml = '';
-    let i = 0;
-    
-    while (i < html.length && isSessionValid(sessionId)) {
-        // Handle HTML tags
-        if (html[i] === '<') {
-            const tagEnd = html.indexOf('>', i);
-            if (tagEnd !== -1) {
-                currentHtml += html.substring(i, tagEnd + 1);
-                i = tagEnd + 1;
-                element.innerHTML = currentHtml;
-                continue;
-            }
-        }
-        
-        const char = html[i];
-        currentHtml += char;
-        element.innerHTML = currentHtml;
-        i++;
-        
-        let delay = INTRO_SPEED;
-        if ('.!?'.includes(char)) delay = PAUSE_AFTER_PERIOD;
-        else if (char === ',') delay = PAUSE_AFTER_PERIOD / 3;
-        
-        const continueAnim = await pauseAwareSleep(delay, sessionId);
-        if (!continueAnim) return;
-    }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -868,9 +737,6 @@ function forceCompleteIntro() {
     const notes = demoConfig.intro.notes;
     if (notes) {
         notes.forEach(note => {
-            // Skip 'clear' type notes when showing all
-            if (note.type === 'clear') return;
-            
             displayNote(note, notepadEl, null);
         });
     }
@@ -1126,10 +992,6 @@ function backToScrollView() {
     if (lastStation) lastStation.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-function resetDemo() {
-    // Go back to landing page (demo selection)
-    window.location.href = 'index.html';
-}
 function goBackToLanding() {
     // Stop everything and go back to landing page
     currentSessionId++;
@@ -1138,57 +1000,6 @@ function goBackToLanding() {
         audioElement.currentTime = 0;
     }
     window.location.href = 'index.html';
-}
-function resetDemoState() {
-    currentSessionId++;
-    currentStation = -1;
-    isTyping = false;
-    isPaused = false;
-    isZoomedOut = false;
-    
-    if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
-    }
-    
-    // Reset UI
-    document.getElementById('global-nav-controls').style.display = 'none';
-    document.getElementById('intro-text').innerHTML = '';
-    document.getElementById('intro-final').style.display = 'none';
-    
-    // Reset stations
-    if (demoConfig) {
-        demoConfig.stations.forEach(station => {
-            const stationEl = document.getElementById('station-' + station.id);
-            if (stationEl) {
-                stationEl.style.display = 'none';
-                stationEl.classList.remove('inactive');
-                
-                station.blocks.forEach(block => {
-                    const codeEl = document.getElementById('code-' + block.id);
-                    const outputEl = document.getElementById('output-' + block.id);
-                    if (codeEl) codeEl.textContent = '';
-                    if (outputEl) outputEl.textContent = '';
-                });
-            }
-        });
-    }
-    
-    // Reset split view
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.classList.remove('split-view', 'zooming-out');
-    }
-    document.getElementById('full-script').style.display = 'none';
-    
-    // Reset pipeline
-    document.querySelectorAll('.pipeline .station').forEach(station => {
-        station.classList.remove('done', 'current');
-        station.querySelector('.station-icon').textContent = '○';
-    });
-    
-    showLayout('welcome');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
