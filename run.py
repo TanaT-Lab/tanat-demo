@@ -44,8 +44,8 @@ def check_outputs_exist():
         if not os.path.isdir(demo_path):
             continue
 
-        # Check if demo has a generate.py (meaning it needs outputs)
-        if os.path.exists(os.path.join(demo_path, "generate.py")):
+        # Check if demo has a pipeline.py (meaning it needs outputs)
+        if os.path.exists(os.path.join(demo_path, "pipeline.py")):
             outputs_dir = os.path.join(demo_path, "outputs")
             if not os.path.exists(outputs_dir) or not os.listdir(outputs_dir):
                 missing.append(f"demos/{demo_id}/outputs/")
