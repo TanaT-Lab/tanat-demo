@@ -44,14 +44,6 @@ body {
     min-height: 100vh;
 }
 
-/* Hide demo elements by default until JS loads */
-body.layout-welcome .sidebar,
-body.layout-welcome .main-header,
-body.layout-welcome .main-content,
-body.layout-welcome .global-nav-controls {
-    display: none !important;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════════
    LANDING PAGE STYLES - Split Layout
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -320,118 +312,6 @@ body.layout-welcome .global-nav-controls {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   WELCOME SCREEN - Full viewport, no sidebar/header
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-.welcome-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: 
-        radial-gradient(ellipse at 50% 30%, rgba(88, 166, 255, 0.08) 0%, transparent 50%),
-        var(--bg-primary);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.welcome-content {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
-}
-
-/* Hero logo with glow effect */
-.hero-logo {
-    position: relative;
-    margin-bottom: 0.5rem;
-}
-
-.hero-logo::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 180px;
-    height: 180px;
-    background: radial-gradient(circle, rgba(88, 166, 255, 0.15) 0%, transparent 70%);
-    border-radius: 50%;
-    z-index: -1;
-}
-
-.hero-logo-img {
-    height: 100px;
-    width: auto;
-    filter: brightness(1.1);
-}
-
-.welcome-title {
-    font-size: 3.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -1px;
-}
-
-.welcome-tagline {
-    color: var(--accent-blue);
-    font-size: 0.95rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    margin-bottom: 1rem;
-}
-
-.welcome-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    margin-top: -1rem;
-    margin-bottom: 2rem;
-}
-
-.welcome-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.welcome-start-btn {
-    padding: 1rem 2.5rem;
-    font-size: 1.1rem;
-    font-weight: 600;
-    background-color: var(--accent-green);
-    color: var(--bg-primary);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: 'JetBrains Mono', monospace;
-    transition: all 0.3s ease;
-}
-
-.welcome-start-btn:hover {
-    background-color: var(--accent-green-dark);
-    transform: scale(1.05);
-}
-
-/* Back to demos link */
-.back-to-demos-link {
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 0.85rem;
-    transition: color 0.2s;
-}
-
-.back-to-demos-link:hover {
-    color: var(--accent-blue);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
    TRANSITION SCREEN - Logo spinner between intro and code demo
    ═══════════════════════════════════════════════════════════════════════════════ */
 
@@ -576,52 +456,6 @@ body.layout-welcome .global-nav-controls {
     padding: 3rem 2rem;
 }
 
-/* Play overlay - minimal start button */
-.play-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: var(--bg-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1001;
-}
-
-.play-overlay-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    padding: 2rem 3rem;
-    background: transparent;
-    border: 2px solid var(--accent-green);
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.play-overlay-btn:hover {
-    background: rgba(34, 197, 94, 0.1);
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
-}
-
-.play-overlay-btn .play-icon {
-    font-size: 3rem;
-    color: var(--accent-green);
-}
-
-.play-overlay-btn .play-text {
-    font-size: 1rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
 .intro-screen .intro-content {
     max-width: 900px;
     width: 100%;
@@ -692,32 +526,6 @@ body.layout-welcome .global-nav-controls {
     border-bottom: 1px solid var(--border-color);
 }
 
-/* Section header */
-.note-section {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-top: 0.5rem;
-}
-
-/* Keyword (like Entity) */
-.note-keyword {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: var(--accent-blue);
-    margin: 0.2rem 0;
-}
-
-/* Definition */
-.note-definition {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    font-style: italic;
-    margin-bottom: 0.8rem;
-}
-
 /* Bullets - clean style */
 .note-bullet {
     font-size: 0.95rem;
@@ -738,18 +546,6 @@ body.layout-welcome .global-nav-controls {
     flex-shrink: 0;
 }
 
-/* Examples - inline tags */
-.note-example {
-    display: inline-block;
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    background: var(--bg-tertiary);
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    margin-right: 0.5rem;
-    margin-top: 0.3rem;
-}
-
 /* Title (for later sections) */
 .note-title {
     font-size: 1.3rem;
@@ -758,59 +554,11 @@ body.layout-welcome .global-nav-controls {
     margin-bottom: 0.5rem;
 }
 
-/* Subtitle */
-.note-subtitle {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
-}
-
-.note-highlight {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--accent-yellow);
-    padding: 0.4rem 0.8rem;
-    background-color: rgba(255, 221, 0, 0.08);
-    border-left: 2px solid var(--accent-yellow);
-    border-radius: 0 4px 4px 0;
-    margin-top: 0.5rem;
-}
-
-.note-concept {
-    font-family: 'Fira Code', 'Consolas', monospace;
-    font-size: 1rem;
-    color: var(--accent-blue);
-    padding: 0.6rem 1rem;
-    background-color: rgba(88, 166, 255, 0.08);
-    border-radius: 6px;
-}
-
 .note-detail {
     font-size: 0.85rem;
     color: var(--text-muted);
     padding-left: 1.5rem;
     font-style: italic;
-}
-
-.note-spacer {
-    height: 2rem;
-}
-
-.note-action {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--accent-green);
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-top: 1rem;
-    padding: 0.6rem 1rem;
-    background-color: rgba(34, 197, 94, 0.08);
-    border-radius: 6px;
-}
-
-.note-action .note-icon {
-    font-size: 0.85rem;
 }
 
 .note-divider {
@@ -2340,7 +2088,6 @@ code {
     }
     
     /* Hide mobile pipeline on other layouts */
-    .layout-welcome .mobile-pipeline-header,
     .layout-intro .mobile-pipeline-header,
     .layout-transition .mobile-pipeline-header {
         display: none;
