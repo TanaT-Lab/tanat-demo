@@ -185,7 +185,7 @@ python generate_all.py --list
 
 ```bash
 python -m http.server 8080
-# Open http://localhost:8080/index-new.html
+# Open http://localhost:8080/index.html
 ```
 
 ## Requirements
