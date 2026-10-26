@@ -10,7 +10,7 @@
     <style>
         body { background-color: #0d1117; margin: 0; }
         .sidebar, .main-header, .main-content,
-        .welcome-screen, .intro-screen { display: none; }
+        .intro-screen { display: none; }
         .mobile-pipeline-header { display: none; }
         .transition-screen { 
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -21,30 +21,9 @@
     </style>
     <link rel="stylesheet" href="core/styles.css">
 </head>
-<body class="layout-welcome">
+<body class="layout-transition">
     
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         WELCOME SCREEN
-         ═══════════════════════════════════════════════════════════════════════ -->
-    <div id="welcome-screen" class="welcome-screen">
-        <div class="welcome-content">
-            <div class="hero-logo">
-                <img src="assets/logo.png" alt="" class="hero-logo-img">
-            </div>
-            <h1 class="welcome-title">TanaT</h1>
-            <p class="welcome-tagline">TEMPORAL ANALYSIS OF TRAJECTORIES</p>
-            <p id="demo-description" class="welcome-subtitle">Loading demo...</p>
-            
-            <div class="welcome-actions">
-                <button id="start-demo-btn" class="welcome-start-btn">
-                    ▶ Start Demo
-                </button>
-                <a href="index.html" class="back-to-demos-link">← Back to demos</a>
-            </div>
-        </div>
-        
-        <audio id="demo-audio" preload="auto"></audio>
-    </div>
+    <audio id="demo-audio" preload="auto"></audio>
     
     <!-- ═══════════════════════════════════════════════════════════════════════
          INTRO SCREEN
