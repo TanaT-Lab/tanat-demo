@@ -147,16 +147,12 @@ def _demo_ids_and_titles():
 
 @pytest.fixture
 def landing_index(landing_server):
-    """Write a test demos/index.json (git-ignored) and clean it up after."""
-    ids, titles = _demo_ids_and_titles()
-    entries = [{"id": i, "title": titles[i], "subtitle": "s", "description": "d",
-                "icon": "i", "tags": [], "duration": None} for i in ids]
-    index_path = os.path.join(REPO, _INDEX)
-    with open(index_path, "w", encoding="utf-8") as f:
-        json.dump(entries, f, indent=2)
+    """Build the real demos/index.json (git-ignored build output, idempotent)."""
+    _, titles = _demo_ids_and_titles()
+    generate_all.write_manifest(demos_dir=os.path.join(REPO, "demos"))
+    with open(os.path.join(REPO, _INDEX), encoding="utf-8") as f:
+        entries = json.load(f)
     yield entries, titles
-    if os.path.exists(index_path):
-        os.remove(index_path)
 
 
 def test_landing_shows_one_card_per_entry_and_opens_player(
