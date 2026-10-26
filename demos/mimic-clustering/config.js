@@ -3,10 +3,12 @@
  * 
  * This file contains all content specific to this demo:
  * - Metadata (title, description)
- * - Code snippets and outputs
- * - Station definitions
+ * - Station definitions (id, name, description, audio, shown block ids)
  * - Intro/outro content
  * - Audio track mappings
+ *
+ * Staging only: block code/output/figure are NOT stored here. They come from
+ * demos/mimic-clustering/outputs/outputs.json at load time.
  */
 
 const DEMO_CONFIG = {
@@ -166,274 +168,53 @@ const DEMO_CONFIG = {
     // ═══════════════════════════════════════════════════════════════════════════
     // STATIONS (Pipeline Steps)
     // ═══════════════════════════════════════════════════════════════════════════
+    // Staging only: each station carries its id, name, description, audio and
+    // the list of shown block ids. The actual code, output and figure for each
+    // shown block come from outputs.json at load time (single source of truth).
     stations: [
         {
             id: 1,
             name: 'Load',
             description: 'CSV to Pool',
             audio: 'audio/step1.mp3',
-            blocks: [
-                {
-                    id: '1a',
-                    code: `import pandas as pd
-from tanat.sequence import IntervalSequencePool, IntervalSequenceSettings
-
-# Load MIMIC-IV admissions data
-admissions = pd.read_csv("data/mimic_admissions_pool.csv")
-print(f"Loaded {len(admissions)} admission records")`,
-                    output: 'Loaded 306 admission records'
-                },
-                {
-                    id: '1b',
-                    code: `# Create sequence pool (collection of all patient sequences)
-settings = IntervalSequenceSettings(
-    id_column="subject_id",
-    start_column="time",
-    end_column="endtime",
-    entity_features=["admission_type", "admission_location"]
-)
-
-pool = IntervalSequencePool(sequence_data=admissions, settings=settings)
-print(pool)  # POOL-LEVEL: view of all patients`,
-                    output: `┌──────────────────────────────────────────────────┐
-│           IntervalSequencePool summary           │
-└──────────────────────────────────────────────────┘
-
-STATISTICS
-─────────────────────────
-  Total sequences    100            
-  Average length     3.1            
-  Minimum length     1              
-  Maximum length     20             
-  Vocabulary size    30             
-
-DATA PREVIEW
-─────────────────────────
-  Sequence Data:
-     subject_id       time    endtime admission_type     admission_location
-       10000032 2180-05-06 2180-05-07         URGENT TRANSFER FROM HOSPITAL
-       10000032 2180-06-26 2180-06-27       EW EMER.         EMERGENCY ROOM
-       10000032 2180-07-23 2180-07-25       EW EMER.         EMERGENCY ROOM
-
-  Static Data:
-    None
-
-  Metadata:
-    Temporal:
-      Type: datetime
-      Granularity: DAY
-    
-    Entity Features (2):
-      - admission_type: categorical
-      - admission_location: categorical
-    
-    Static Features (0):
-      (none)`
-                }
-            ]
+            blocks: ['1a', '1b']
         },
         {
             id: 2,
             name: 'Visualize',
             description: 'Histogram',
             audio: 'audio/step2.mp3',
-            blocks: [
-                {
-                    id: '2b',
-                    code: `from tanat.visualization.sequence import SequenceVisualizer
-
-# POOL-LEVEL: Visualize distribution across ALL patients
-SequenceVisualizer.histogram(bar_order="descending") \\
-    .colors(ADMISSION_COLORS) \\
-    .title("Admission Type Distribution") \\
-    .draw(pool, entity_features=["admission_type"])`,
-                    output: null,
-                    outputType: 'figure'
-                }
-            ]
+            blocks: ['2b']
         },
         {
             id: 3,
             name: 'Filter',
             description: 'Criterion',
             audio: 'audio/step3.mp3',
-            blocks: [
-                {
-                    id: '3a',
-                    code: `from tanat.criterion import QueryCriterion
-
-# POOL-LEVEL: Filter to keep only patients with emergency admissions
-criterion = QueryCriterion(query="admission_type.str.contains('EMER')")
-emergency_pool = pool.filter(criterion, level="sequence")
-print(emergency_pool)`,
-                    output: `┌──────────────────────────────────────────────────┐
-│           IntervalSequencePool summary           │
-└──────────────────────────────────────────────────┘
-
-STATISTICS
-─────────────────────────
-  Total sequences    64             
-  Average length     3.9            
-  Minimum length     1              
-  Maximum length     20             
-  Vocabulary size    29             
-
-DATA PREVIEW
-─────────────────────────
-  Sequence Data:
-     subject_id       time    endtime admission_type     admission_location
-       10000032 2180-05-06 2180-05-07         URGENT TRANSFER FROM HOSPITAL
-       10000032 2180-06-26 2180-06-27       EW EMER.         EMERGENCY ROOM
-       10000032 2180-07-23 2180-07-25       EW EMER.         EMERGENCY ROOM
-
-  Static Data:
-    None
-
-  Metadata:
-    Temporal:
-      Type: datetime
-      Granularity: DAY
-    
-    Entity Features (2):
-      - admission_type: categorical
-      - admission_location: categorical
-    
-    Static Features (0):
-      (none)`
-                },
-                {
-                    id: '3b',
-                    code: `# Compare cohort sizes
-print(f"Before: {len(pool.unique_ids)} patients")
-print(f"After:  {len(emergency_pool.unique_ids)} patients")
-print(f"Retention: {100*len(emergency_pool.unique_ids)/len(pool.unique_ids):.1f}%")`,
-                    output: 'Before: 100 patients\nAfter:  64 patients\nRetention: 64.0%'
-                }
-            ]
+            blocks: ['3a', '3b']
         },
         {
             id: 4,
             name: 'Align',
             description: 'T0 Reference',
             audio: 'audio/step4.mp3',
-            blocks: [
-                {
-                    id: '4a',
-                    code: `# POOL-LEVEL: Define reference date (T0) for filtered cohort
-# T0 = first emergency admission for each patient
-emergency_pool.zero_from_query(query="admission_type.str.contains('EMER')")
-print(f"T0 set for {len(emergency_pool.t_zero)} patients")`,
-                    output: 'T0 set for 64 patients'
-                },
-                {
-                    id: '4b',
-                    code: `# Timeline of filtered cohort in relative time
-SequenceVisualizer.timeline(relative_time=True, granularity="day", stacking_mode="flat") \\
-    .colors(ADMISSION_COLORS) \\
-    .title("Emergency Cohort (Relative to T0)") \\
-    .xlabel("Relative time (days)") \\
-    .draw(emergency_pool, entity_features=["admission_type"])`,
-                    output: null,
-                    outputType: 'figure'
-                }
-            ]
+            blocks: ['4a', '4b']
         },
         {
             id: 5,
             name: 'Cluster',
             description: 'Edit Distance',
             audio: 'audio/step5.mp3',
-            blocks: [
-                {
-                    id: '5a',
-                    code: `from tanat.metric.entity import HammingEntityMetric, HammingEntityMetricSettings
-from tanat.metric.sequence import EditSequenceMetric, EditSequenceMetricSettings
-
-# Entity-level metric (compare individual admissions)
-hamming = HammingEntityMetric(
-    settings=HammingEntityMetricSettings(default_value=0.0)
-)
-
-# Sequence-level metric: Edit distance (Optimal Matching)
-seq_metric = EditSequenceMetric(
-    settings=EditSequenceMetricSettings(entity_metric=hamming)
-)
-print(seq_metric)`,
-                    output: `┌──────────────────────────────────────────────────┐
-│                EditSequenceMetric                │
-└──────────────────────────────────────────────────┘
-
-Settings
-─────────────────────────
-  entity_metric      HammingEntityMetric
-  distance_matrix    Memory (float32)
-  indel_cost         1.0            
-  normalize          False          `
-                },
-                {
-                    id: '5b',
-                    code: `from tanat.clustering import HierarchicalClusterer, HierarchicalClustererSettings
-
-# POOL-LEVEL: Cluster patient sequences by similarity
-settings = HierarchicalClustererSettings(
-    metric=seq_metric,
-    n_clusters=4,
-    cluster_column="cluster"
-)
-
-clusterer = HierarchicalClusterer(settings=settings)
-clusterer.fit(emergency_pool)  # Operates on filtered cohort
-
-# View cluster distribution
-print(emergency_pool.static_data["cluster"].value_counts().sort_index())`,
-                    output: 'Cluster 0: 2 patients\nCluster 1: 9 patients\nCluster 2: 52 patients\nCluster 3: 1 patients'
-                }
-            ]
+            blocks: ['5a', '5b']
         },
         {
             id: 6,
             name: 'Analyze',
             description: 'Faceted Viz',
             audio: 'audio/step6.mp3',
-            blocks: [
-                {
-                    id: '6a',
-                    code: `# Post-clustering visualization: timeline by cluster
-SequenceVisualizer.timeline(relative_time=True, granularity="day", stacking_mode="flat") \\
-    .colors(ADMISSION_COLORS) \\
-    .title("Patient Timelines by Cluster") \\
-    .xlabel("Relative time (days)") \\
-    .x_axis(autofmt_xdate=False) \\
-    .facet(by="cluster", cols=2, share_x=False, share_y=False, title_template="Cluster {value}") \\
-    .draw(emergency_pool, entity_features=["admission_type"])`,
-                    output: null,
-                    outputType: 'figure'
-                }
-            ]
+            blocks: ['6a']
         }
-    ],
-    
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SHARED RESOURCES (like color palettes)
-    // ═══════════════════════════════════════════════════════════════════════════
-    resources: {
-        colorPalette: {
-            name: 'ADMISSION_COLORS',
-            code: `# Define color palette for consistent visualization
-ADMISSION_COLORS = {
-    "EW EMER.": "#ffdd00",           # Flashy yellow
-    "DIRECT EMER.": "#ffe066",       # Light yellow
-    "EU OBSERVATION": "#ff6b6b",     # Coral red
-    "OBSERVATION ADMIT": "#ff9ff3",  # Hot pink
-    "DIRECT OBSERVATION": "#f368e0", # Magenta
-    "AMBULATORY OBSERVATION": "#00d2d3", # Cyan
-    "URGENT": "#a855f7",             # Purple
-    "ELECTIVE": "#22c55e",           # Green
-    "SURGICAL SAME DAY ADMISSION": "#3b82f6", # Blue
-    "DEATH": "#94a3b8",              # Slate
-}`
-        }
-    }
+    ]
 };
 
 // Export for use in player

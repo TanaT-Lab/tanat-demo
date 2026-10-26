@@ -45,29 +45,65 @@ function getDemoIdFromUrl() {
  */
 async function loadDemoConfig(demoId) {
     demoBasePath = `demos/${demoId}/`;
-    
-    try {
-        // Load the config script dynamically
-        const script = document.createElement('script');
-        script.src = `${demoBasePath}config.js`;
-        
-        return new Promise((resolve, reject) => {
-            script.onload = () => {
-                if (typeof DEMO_CONFIG !== 'undefined') {
-                    demoConfig = DEMO_CONFIG;
-                    console.log('Demo config loaded:', demoConfig.id);
-                    resolve(demoConfig);
-                } else {
-                    reject(new Error('DEMO_CONFIG not found in config.js'));
-                }
-            };
-            script.onerror = () => reject(new Error('Failed to load config.js'));
-            document.head.appendChild(script);
-        });
-    } catch (error) {
-        console.error('Failed to load demo config:', error);
-        throw error;
+
+    // Load the config script dynamically (staging only: metadata, stations,
+    // shown block ids — no code/output/figure).
+    const script = document.createElement('script');
+    script.src = `${demoBasePath}config.js`;
+
+    await new Promise((resolve, reject) => {
+        script.onload = () => {
+            if (typeof DEMO_CONFIG !== 'undefined') {
+                demoConfig = DEMO_CONFIG;
+                resolve(demoConfig);
+            } else {
+                reject(new Error('DEMO_CONFIG not found in config.js'));
+            }
+        };
+        script.onerror = () => reject(new Error('Failed to load config.js'));
+        document.head.appendChild(script);
+    });
+
+    // Enrich each shown block from the executed pipeline's outputs.json.
+    // Errors (missing outputs.json or a missing block id) propagate to the
+    // existing catch in the DOMContentLoaded handler.
+    await fillBlocksFromOutputs(demoId);
+
+    console.log('Demo config loaded:', demoConfig.id);
+    return demoConfig;
+}
+
+/**
+ * Fetch outputs/<demoId>/outputs.json and fill each shown block's code,
+ * output and figure from it. outputs.json is the single source of truth for
+ * what the audience sees.
+ */
+async function fillBlocksFromOutputs(demoId) {
+    const response = await fetch(`${demoBasePath}outputs/outputs.json`);
+    if (!response.ok) {
+        throw new Error(
+            `Failed to load outputs/outputs.json (HTTP ${response.status})`
+        );
     }
+    const outputs = await response.json();
+    const blockMap = new Map((outputs.blocks || []).map(b => [b.id, b]));
+
+    demoConfig.stations.forEach(station => {
+        station.blocks = station.blocks.map(id => {
+            const data = blockMap.get(id);
+            if (!data) {
+                throw new Error(
+                    `Block '${id}' (station ${station.id}) missing from outputs.json`
+                );
+            }
+            return {
+                id: data.id,
+                code: data.code,
+                output: data.output,
+                figure: data.figure
+            };
+        });
+    });
 }
 
 /**
@@ -168,11 +204,12 @@ function generateStations() {
             ${station.blocks.map(block => {
                 let outputHtml = '';
                 
-                if (block.outputType === 'figure') {
-                    // Figure output - images are in demo's outputs/ folder
+                if (block.figure) {
+                    // Figure output - images are in demo's outputs/ folder,
+                    // file name comes from outputs.json
                     outputHtml = `
                         <div class="figure-output" id="output-${block.id}" style="visibility: hidden;">
-                            <img src="${demoBasePath}outputs/${block.id}.png" alt="Output visualization">
+                            <img src="${demoBasePath}outputs/${block.figure}" alt="Output visualization">
                         </div>
                     `;
                 } else if (block.output !== null && block.output !== undefined) {
@@ -184,6 +221,7 @@ function generateStations() {
                     outputDiv.textContent = block.output;
                     outputHtml = outputDiv.outerHTML;
                 }
+                // A block with neither figure nor output renders no output area
                 
                 return `
                     <div class="code-block">
