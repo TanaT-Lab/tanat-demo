@@ -1,9 +1,6 @@
 # Generated outputs (rebuilt by CI)
 demos/*/outputs/
 
-# Legacy outputs folder
-outputs/figures/
-
 # Python
 __pycache__/
 *.pyc
