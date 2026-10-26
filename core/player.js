@@ -67,18 +67,18 @@ async function loadDemoConfig(demoId) {
     // Enrich each shown block from the executed pipeline's outputs.json.
     // Errors (missing outputs.json or a missing block id) propagate to the
     // existing catch in the DOMContentLoaded handler.
-    await fillBlocksFromOutputs(demoId);
+    await fillBlocksFromOutputs();
 
     console.log('Demo config loaded:', demoConfig.id);
     return demoConfig;
 }
 
 /**
- * Fetch outputs/<demoId>/outputs.json and fill each shown block's code,
+ * Fetch <demoBasePath>outputs/outputs.json and fill each shown block's code,
  * output and figure from it. outputs.json is the single source of truth for
  * what the audience sees.
  */
-async function fillBlocksFromOutputs(demoId) {
+async function fillBlocksFromOutputs() {
     const response = await fetch(`${demoBasePath}outputs/outputs.json`);
     if (!response.ok) {
         throw new Error(
