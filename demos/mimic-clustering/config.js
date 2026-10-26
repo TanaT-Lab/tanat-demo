@@ -15,10 +15,10 @@ const DEMO_CONFIG = {
     // ═══════════════════════════════════════════════════════════════════════════
     // METADATA
     // ═══════════════════════════════════════════════════════════════════════════
+    // Card metadata (title, subtitle, description, icon, tags) lives in
+    // demos/mimic-clustering/demo.json, the single source of truth read by the
+    // landing and player. Only the id stays here.
     id: 'mimic-clustering',
-    title: 'Hospital Readmission Pattern Analysis',
-    subtitle: 'with MIMIC-IV Dataset',
-    description: 'Analyze hospital readmission patterns using TanaT clustering capabilities',
     
     // ═══════════════════════════════════════════════════════════════════════════
     // INTRO CONTENT - Notepad style with timed notes

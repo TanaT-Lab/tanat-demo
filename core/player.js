@@ -69,6 +69,17 @@ async function loadDemoConfig(demoId) {
     // existing catch in the DOMContentLoaded handler.
     await fillBlocksFromOutputs();
 
+    // Card metadata (title/subtitle) is the single source of truth in
+    // <demoBasePath>demo.json, written by generate_all.py. Errors propagate to
+    // the existing catch.
+    const demoResponse = await fetch(`${demoBasePath}demo.json`);
+    if (!demoResponse.ok) {
+        throw new Error(`Failed to load demo.json (HTTP ${demoResponse.status})`);
+    }
+    const demoMeta = await demoResponse.json();
+    demoConfig.title = demoMeta.title;
+    demoConfig.subtitle = demoMeta.subtitle;
+
     console.log('Demo config loaded:', demoConfig.id);
     return demoConfig;
 }

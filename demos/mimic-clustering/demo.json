@@ -1,0 +1,8 @@
+{
+  "id": "mimic-clustering",
+  "title": "Hospital Readmission Patterns",
+  "subtitle": "MIMIC-IV Dataset",
+  "description": "Analyze hospital readmission patterns using clustering on patient trajectories",
+  "icon": "🏥",
+  "tags": ["clustering", "healthcare", "MIMIC-IV"]
+}

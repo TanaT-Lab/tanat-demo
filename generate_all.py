@@ -118,6 +118,80 @@ def discover_demos():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# DEMO MANIFEST
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+def _format_duration(total_seconds):
+    """Format a total duration (seconds) as a human string like '~4 min'."""
+    minutes = -(-int(total_seconds) // 60)  # ceil division to the minute
+    return f"~{minutes} min"
+
+
+def _demo_duration(demo_dir):
+    """Total narration duration from audio/manifest.json, else None.
+
+    A static site cannot measure an audio folder, so the duration is derived
+    from the per-demo audio manifest written by tools/tts.py. When that
+    manifest is absent the duration is None (the landing hides it).
+    """
+    manifest_path = os.path.join(demo_dir, "audio", "manifest.json")
+    if not os.path.exists(manifest_path):
+        return None
+    with open(manifest_path, encoding="utf-8") as f:
+        manifest = json.load(f)
+    total = sum(
+        section.get("duration", 0)
+        for section in manifest.get("sections", {}).values()
+    )
+    return _format_duration(total)
+
+
+def _read_demo_metadata(demo_dir, demo_id):
+    """Read the single-source card metadata from demos/<id>/demo.json."""
+    demo_json = os.path.join(demo_dir, "demo.json")
+    if not os.path.exists(demo_json):
+        raise RuntimeError(
+            f"Demo '{demo_id}' has a pipeline.py but no demo.json; "
+            "add the card metadata in demos/<id>/demo.json"
+        )
+    with open(demo_json, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def write_manifest(demos_dir=DEMOS_DIR):
+    """
+    Rewrite demos/index.json from every demos/*/demo.json, sorted by id.
+
+    Runs on every generate_all.py run (but not --list), even when only some
+    demos are generated. A demo folder with pipeline.py but no demo.json is an
+    error.
+    """
+    entries = []
+    for entry in os.listdir(demos_dir):
+        demo_dir = os.path.join(demos_dir, entry)
+        if not os.path.isdir(demo_dir):
+            continue
+        if not os.path.exists(os.path.join(demo_dir, "pipeline.py")):
+            continue
+        meta = _read_demo_metadata(demo_dir, entry)
+        entries.append({
+            "id": meta.get("id", entry),
+            "title": meta.get("title", ""),
+            "subtitle": meta.get("subtitle", ""),
+            "description": meta.get("description", ""),
+            "icon": meta.get("icon", ""),
+            "tags": meta.get("tags", []),
+            "duration": _demo_duration(demo_dir),
+        })
+    entries.sort(key=lambda e: e["id"])
+    index_path = os.path.join(demos_dir, "index.json")
+    with open(index_path, "w", encoding="utf-8") as f:
+        json.dump(entries, f, indent=2, ensure_ascii=False)
+    return entries
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # RUNNER
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -291,6 +365,10 @@ Examples:
         except Exception as e:
             print(f"  [ERROR] Generation failed: {e}")
             results[demo_id] = False
+
+    # Rewrite demos/index.json from every demos/*/demo.json (single source of
+    # truth for the landing), even when only some demos were generated.
+    write_manifest()
 
     # Summary
     print("\n" + "=" * 60)
