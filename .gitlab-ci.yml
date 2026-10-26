@@ -1,0 +1,58 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  image: python:3.11
+  tags: &id001
+    - ci.inria.fr
+    - linux
+    - small
+  script:
+    - pip install tanat
+    - echo "Generating outputs for all demos..."
+    - python generate_all.py
+    - echo "Build complete"
+  artifacts:
+    paths:
+      - demos/*/outputs/
+    expire_in: 1 week
+  only:
+    - main
+
+pages:
+  stage: deploy
+  image: alpine:latest
+  tags: *id001
+  dependencies:
+    - build
+  script:
+    - mkdir -p public
+    
+    # Core files
+    - cp index.html public/
+    - cp player.html public/
+    
+    # Core JS/CSS
+    - mkdir -p public/core
+    - cp core/*.js public/core/
+    - cp core/*.css public/core/
+    
+    # Shared assets
+    - mkdir -p public/assets
+    - cp assets/* public/assets/
+    
+    # Data (shared)
+    - mkdir -p public/data
+    - cp data/*.csv public/data/
+    
+    # Demos (config, audio, outputs)
+    - mkdir -p public/demos
+    - cp -r demos/* public/demos/
+    
+  artifacts:
+    paths:
+      - public
+  only:
+    - main

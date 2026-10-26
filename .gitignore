@@ -1,0 +1,23 @@
+# Generated outputs (rebuilt by CI)
+demos/*/outputs/
+
+# Legacy outputs folder
+outputs/figures/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local testing
+public/

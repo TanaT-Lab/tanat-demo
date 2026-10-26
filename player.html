@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TanaT Demo Player</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <!-- Critical CSS to prevent flash - only for initial load -->
+    <style>
+        body { background-color: #0d1117; margin: 0; }
+        .sidebar, .main-header, .main-content,
+        .welcome-screen, .intro-screen { display: none; }
+        .mobile-pipeline-header { display: none; }
+        .transition-screen { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #0d1117; display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .global-nav-controls { display: none; }
+    </style>
+    <link rel="stylesheet" href="core/styles.css">
+</head>
+<body class="layout-welcome">
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         WELCOME SCREEN
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="welcome-screen" class="welcome-screen">
+        <div class="welcome-content">
+            <div class="hero-logo">
+                <img src="assets/logo.png" alt="" class="hero-logo-img">
+            </div>
+            <h1 class="welcome-title">TanaT</h1>
+            <p class="welcome-tagline">TEMPORAL ANALYSIS OF TRAJECTORIES</p>
+            <p id="demo-description" class="welcome-subtitle">Loading demo...</p>
+            
+            <div class="welcome-actions">
+                <button id="start-demo-btn" class="welcome-start-btn">
+                    ▶ Start Demo
+                </button>
+                <a href="index.html" class="back-to-demos-link">← Back to demos</a>
+            </div>
+        </div>
+        
+        <audio id="demo-audio" preload="auto"></audio>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         INTRO SCREEN
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="intro-screen" class="intro-screen" style="display: none;">
+        <div class="intro-content">
+            <!-- Notepad-style notes container -->
+            <div class="intro-notepad-container">
+                <div id="intro-notepad" class="intro-notepad"></div>
+            </div>
+            
+            <!-- Visualizations will be injected here by the player -->
+            <div id="intro-visualizations"></div>
+        </div>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         TRANSITION SCREEN - Logo spinner between landing and intro
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <div id="transition-screen" class="transition-screen">
+        <div class="transition-content">
+            <h1 id="transition-title" class="transition-title">Loading...</h1>
+            <div class="transition-logo">
+                <img src="assets/logo.png" alt="" class="transition-logo-img">
+            </div>
+            <p id="transition-text" class="transition-text">Preparing demo...</p>
+            <div id="transition-actions" class="transition-actions">
+                <button id="transition-back-btn" class="transition-btn back">← Back to demos</button>
+                <button id="transition-start-btn" class="transition-btn start">Ready to start ▶</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         CODE DEMO LAYOUT
+         ═══════════════════════════════════════════════════════════════════════ -->
+    
+    <!-- Mobile Pipeline Header (shown only on mobile) -->
+    <div class="mobile-pipeline-header" id="mobile-pipeline-header">
+        <div class="mobile-pipeline-brand">
+            <div class="mobile-pipeline-logo-wrap">
+                <img src="assets/logo.png" alt="" class="mobile-pipeline-logo">
+            </div>
+            <span class="mobile-pipeline-title" id="mobile-demo-title">Demo</span>
+        </div>
+        <div class="mobile-pipeline-steps" id="mobile-pipeline-steps">
+            <!-- Steps generated dynamically -->
+        </div>
+    </div>
+    
+    <!-- Mobile Explore More Header (shown in full-script view on mobile) -->
+    <div class="mobile-explore-header" id="mobile-explore-header">
+        <div class="mobile-explore-brand">
+            <div class="mobile-explore-logo-wrap">
+                <img src="assets/logo.png" alt="" class="mobile-explore-logo">
+            </div>
+            <span class="mobile-explore-title">TanaT</span>
+        </div>
+        <div class="mobile-explore-links">
+            <a href="https://tanat.gitlabpages.inria.fr/core/tanat/" target="_blank" class="mobile-explore-link">Docs</a>
+            <a href="https://gitlab.inria.fr/tanat/core/tanat" target="_blank" class="mobile-explore-link">GitLab</a>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <aside class="sidebar" style="display: none;">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <img src="assets/logo.png" alt="" class="sidebar-logo-img">
+            </div>
+            <h1 class="sidebar-title">TanaT</h1>
+            <p class="sidebar-tagline">TEMPORAL ANALYSIS OF TRAJECTORIES</p>
+        </div>
+        
+        <hr>
+        
+        <!-- Pipeline section (hidden in full-script view) -->
+        <div class="sidebar-pipeline-section" id="sidebar-pipeline-section">
+            <p class="section-label">PIPELINE</p>
+            <div class="pipeline" id="pipeline-container">
+                <!-- Pipeline stations will be generated dynamically -->
+            </div>
+        </div>
+        
+        <!-- Explore section (shown in full-script view) -->
+        <div class="sidebar-explore-section" id="sidebar-explore-section" style="display: none;">
+            <p class="section-label">EXPLORE MORE</p>
+            <div class="sidebar-explore-links">
+                <a href="https://tanat.gitlabpages.inria.fr/core/tanat/" target="_blank" class="sidebar-explore-link">
+                    Documentation
+                </a>
+                <a href="https://gitlab.inria.fr/tanat/core/tanat" target="_blank" class="sidebar-explore-link">
+                    GitLab Repository
+                </a>
+                <a href="index.html" class="sidebar-explore-link back-link">
+                    ← Back to Demos
+                </a>
+            </div>
+        </div>
+    </aside>
+    
+    <!-- Header -->
+    <header class="main-header" style="display: none;">
+        <div class="header-titles">
+            <h1 id="header-title">Demo Title</h1>
+            <h2 id="header-subtitle">Demo Subtitle</h2>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content" style="display: none;">
+        <div id="stations-container">
+            <!-- Stations will be generated dynamically -->
+        </div>
+        
+        <div id="spacer" class="spacer"></div>
+    </main>
+    
+    <!-- Global Navigation Controls -->
+    <div id="global-nav-controls" class="global-nav-controls" style="display: none;">
+        <div class="nav-drag-handle" title="Drag to move">☰</div>
+        <button id="global-back-btn" class="global-nav-btn back">✖ Exit</button>
+        <button id="global-prev-btn" class="global-nav-btn" disabled>⏪ Prev</button>
+        <button id="global-pause-btn" class="global-nav-btn pause">⏸ Pause</button>
+        <button id="global-next-btn" class="global-nav-btn">Next ⏩</button>
+        <button id="global-skip-btn" class="global-nav-btn reveal">👁 Reveal</button>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    
+    <!-- Demo config will be loaded dynamically -->
+    <script id="demo-config-script"></script>
+    <script src="core/player.js"></script>
+</body>
+</html>

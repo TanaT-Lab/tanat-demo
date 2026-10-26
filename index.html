@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TanaT Demos</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="core/styles.css">
+</head>
+<body class="landing-page">
+    
+    <div class="landing-split">
+        <!-- Left Panel: Branding -->
+        <aside class="landing-branding">
+            <div class="branding-content">
+                <div class="landing-logo">
+                    <img src="assets/logo.png" alt="" class="landing-logo-img">
+                </div>
+                <h1 class="landing-title">TanaT</h1>
+                <p class="landing-tagline">TEMPORAL ANALYSIS OF TRAJECTORIES</p>
+                <p class="landing-subtitle">An extensible Python library for temporal sequence analysis, with a focus on patient care pathways.</p>
+                
+                <div class="landing-links">
+                    <a href="https://tanat.gitlabpages.inria.fr/core/tanat/" target="_blank" class="landing-link">
+                        Documentation
+                    </a>
+                    <a href="https://gitlab.inria.fr/tanat/core/tanat" target="_blank" class="landing-link">
+                        GitLab
+                    </a>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Right Panel: Demo Selection -->
+        <main class="landing-demos">
+            <header class="demos-header">
+                <h2 class="demos-title">Interactive Demos</h2>
+                <p class="demos-subtitle">Click a demo to start</p>
+            </header>
+            
+            <div class="demos-list" id="demos-list">
+                <!-- Demos will be loaded dynamically -->
+            </div>
+        </main>
+    </div>
+    
+    <script src="core/landing.js"></script>
+</body>
+</html>
