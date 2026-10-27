@@ -8,9 +8,10 @@ Interactive demonstrations of the TanaT framework for temporal sequence analysis
 
 ## Overview
 
-This is a modular demo framework that showcases TanaT capabilities through interactive, narrated demonstrations. Each demo is self-contained with its own configuration, audio files, and generated outputs.
-
-### Current Demos
+A modular demo framework: a player types real TanaT code step by step, shows its
+outputs and figures, synchronized with an audio narration. Each demo is
+self-contained. The code shown is **written once**, in a `pipeline.py` that is
+really executed: what the audience sees is what ran.
 
 | Demo | Description |
 |------|-------------|
@@ -19,180 +20,85 @@ This is a modular demo framework that showcases TanaT capabilities through inter
 ## Quick Start
 
 ```bash
-# Run the demo locally
-python run.py
+pip install -r requirements.txt   # pins tanat==0.10.4
+python run.py                     # generate outputs if needed, serve, open browser
 
-# Options
-python run.py --port 9000      # Custom port
-python run.py --regenerate     # Force regenerate all outputs
-python run.py --no-browser     # Don't open browser
+python run.py --port 9000         # custom port
+python run.py --regenerate        # force regenerate all outputs
+python run.py --no-browser        # don't open browser
 ```
 
 ## Architecture
 
 ```
 tanat-demo/
-├── index.html              # Landing page (demo selection)
+├── index.html              # Landing page (cards read from demos/index.json)
 ├── player.html             # Universal demo player
 ├── run.py                  # Local launcher
-├── generate_all.py         # Master output generator
+├── generate_all.py         # Runs demos/*/pipeline.py, writes outputs + demos/index.json
 │
-├── core/                   # Shared components
+├── core/                   # Shared front (no build step)
 │   ├── styles.css          # Dark terminal theme
-│   ├── player.js           # Player logic (typewriter, navigation)
+│   ├── player.js           # Player logic (typewriter, navigation, audio)
 │   └── landing.js          # Landing page controller
 │
-├── assets/                 # Shared assets
-│   └── logo.png
-│
-├── data/                   # Shared data files
-│   └── mimic_admissions_pool.csv
+├── tools/tts.py            # SCRIPT.md sections -> audio/*.mp3 (Kokoro, CPU)
+├── tests/                  # pytest (+ Playwright headless for the front)
+├── assets/                 # Shared assets (logo)
+├── data/                   # Shared data (mimic_admissions_pool.csv)
 │
 └── demos/                  # Individual demos
+    ├── index.json          # Generated manifest (gitignored)
     └── mimic-clustering/
-        ├── config.js       # Demo configuration
-        ├── generate.py     # Output generator script
-        ├── audio/          # Narration audio files
-        └── outputs/        # Generated figures (gitignored)
+        ├── pipeline.py     # The code shown, in `# %% <id>` blocks
+        ├── demo.json       # Card metadata (landing page, player header)
+        ├── config.js       # Staging: intro notes, stations, audio, shown block ids
+        ├── SCRIPT.md       # Narration, one `## <section>` per audio file
+        ├── audio/          # Narration mp3
+        └── outputs/        # Generated (gitignored): outputs.json + figures
 ```
 
 ## Adding a New Demo
 
-### 1. Create the demo folder
+1. **Create** `demos/my-demo/`.
+2. **`pipeline.py`**: everything before the first `# %%` marker is a hidden
+   preamble (imports, plot theme). Each `# %% <id>` block is run in a shared
+   namespace; its code, printed output and at most one figure go to
+   `outputs/outputs.json` (figure saved as `outputs/<id>.png`).
 
-```bash
-mkdir -p demos/my-demo/{audio,outputs}
-```
+   ```python
+   # %% 1a
+   import pandas as pd
+   df = pd.read_csv("data/my_data.csv")
+   print(f"Loaded {len(df)} records")
+   ```
 
-### 2. Create `demos/my-demo/config.js`
+3. **`demo.json`**: `id`, `title`, `subtitle`, `description`, `icon`, `tags`.
+4. **`config.js`**: staging only. List the stations and which block ids each one
+   shows (`blocks: ['1a', '1b']`); a block that is not listed runs but stays
+   hidden. See `demos/mimic-clustering/config.js`.
+5. **Narration**: write `SCRIPT.md` (`## intro`, `## step1` ... `## end`), then
+   `uv run tools/tts.py my-demo` (cached by text hash, fails above the time budget).
+6. **Check**: `python generate_all.py my-demo`, then `python run.py`.
 
-```javascript
-const DEMO_CONFIG = {
-    id: 'my-demo',
-    title: 'My Demo Title',
-    subtitle: 'Subtitle',
-    description: 'Short description',
-    
-    intro: {
-        audio: 'audio/intro.mp3',
-        phases: [
-            { type: 'text', content: 'Welcome to this demo...' }
-        ]
-    },
-    
-    stations: [
-        {
-            id: 1,
-            name: 'Load',
-            description: 'Load data',
-            audio: 'audio/step1.mp3',
-            blocks: [
-                {
-                    id: '1a',
-                    code: `import pandas as pd\ndf = pd.read_csv("data.csv")`,
-                    output: 'Loaded 100 records'
-                }
-            ]
-        }
-        // More stations...
-    ],
-    
-    outro: { audio: 'audio/end.mp3' }
-};
-```
-
-### 3. Create `demos/my-demo/generate.py`
-
-```python
-#!/usr/bin/env python3
-"""My Demo - Output Generator"""
-
-import os
-DEMO_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUTS_DIR = os.path.join(DEMO_DIR, "outputs")
-
-def generate():
-    """Generate outputs. Returns True on success."""
-    os.makedirs(OUTPUTS_DIR, exist_ok=True)
-    
-    # Generate your figures here...
-    # Save them as OUTPUTS_DIR/block_id.png
-    
-    print(f"  [my-demo] ✓ Generated outputs")
-    return True
-
-if __name__ == "__main__":
-    import sys
-    sys.exit(0 if generate() else 1)
-```
-
-### 4. Register in `core/landing.js`
-
-```javascript
-const DEMOS_REGISTRY = [
-    // Existing demos...
-    {
-        id: 'my-demo',
-        title: 'My Demo Title',
-        subtitle: 'Subtitle',
-        description: 'Short description',
-        icon: '📊',
-        tags: ['tag1', 'tag2'],
-        duration: '~5 min',
-        path: 'demos/my-demo'
-    }
-];
-```
-
-### 5. Add audio files
-
-Record narration and save to `demos/my-demo/audio/`:
-- `intro.mp3` - Introduction
-- `step1.mp3` → `stepN.mp3` - One per station
-- `end.mp3` - Conclusion
-
-### 6. Test locally
-
-```bash
-python run.py --regenerate
-```
-
-## CI/CD Pipeline
-
-The GitLab CI pipeline automatically:
-
-1. **Build stage**: Runs `generate_all.py` to create outputs for all demos
-2. **Deploy stage**: Publishes to GitLab Pages
-
-Outputs are regenerated on every push to `main`.
+The landing page picks the demo up from `demos/index.json`: nothing else to register.
 
 ## Development
 
-### Generate outputs manually
-
 ```bash
-# All demos
-python generate_all.py
+python generate_all.py                  # all demos
+python generate_all.py mimic-clustering # one demo
+python generate_all.py --list           # list demos
 
-# Specific demo
-python generate_all.py mimic-clustering
-
-# List available demos
-python generate_all.py --list
+pytest tests/                           # front tests need: pip install playwright && playwright install chromium
 ```
 
-### Local development server
-
-```bash
-python -m http.server 8080
-# Open http://localhost:8080/index.html
-```
+There is no CI yet: a GitHub Actions workflow (outputs, tests, Pages) is planned.
 
 ## Requirements
 
 - Python 3.10+
-- TanaT framework (`pip install tanat`)
-- matplotlib, pandas
+- `tanat==0.10.4` (see `requirements.txt`)
 
 ## License
 
