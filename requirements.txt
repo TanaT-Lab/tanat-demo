@@ -1,1 +1,4 @@
 tanat==0.10.4
+# tanat 0.10.4 joins static features without maintain_order: with polars 2
+# the cluster labels land on the wrong patients. Drop once fixed upstream.
+polars<2

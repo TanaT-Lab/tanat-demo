@@ -83,13 +83,7 @@ from tanat.criterion import EntityCriterion
 # Keep only patients with at least one emergency admission
 EMER = pl.col("admission_type").cast(pl.Utf8).str.contains("EMER")
 ids = pool.which(EntityCriterion(query=EMER))
-emergency_pool = build_intervals(
-    admissions[admissions["subject_id"].isin(ids)],
-    id_column="subject_id",
-    start_column="time",
-    end_column="endtime",
-)
-emergency_pool.cast_features({"admission_type": pl.Categorical}, is_static=False)
+emergency_pool = pool.subset(ids)  # whole patients, full history kept
 print(emergency_pool)
 
 # %% 3b
