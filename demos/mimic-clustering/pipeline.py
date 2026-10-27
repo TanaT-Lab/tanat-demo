@@ -84,7 +84,6 @@ from tanat.criterion import EntityCriterion
 EMER = pl.col("admission_type").cast(pl.Utf8).str.contains("EMER")
 ids = pool.which(EntityCriterion(query=EMER))
 emergency_pool = pool.subset(ids)  # whole patients, full history kept
-print(emergency_pool)
 
 # %% 3b
 # Compare cohort sizes
@@ -127,8 +126,9 @@ clusterer = HierarchicalClusterer(
 )
 clusterer.fit(emergency_pool)
 
-# Cluster distribution (stored as a static feature)
-print(emergency_pool.static_data()["cluster"].value_counts().sort_index())
+# Cluster labels are stored with each patient as a static feature
+sizes = emergency_pool.static_data()["cluster"].value_counts().sort_index()
+print("Patients per cluster:", sizes.to_dict())
 
 # %% 6a
 # Timelines by cluster, aligned to T0
