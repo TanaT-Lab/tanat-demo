@@ -2,9 +2,12 @@
 
 Interactive demonstrations of the TanaT framework for temporal sequence analysis.
 
-**Live demo:** https://tanat.gitlabpages.inria.fr/core/tanat-demo/
+**Live demo:** https://tanat-lab.github.io/tanat-demo/
 
-**TanaT repository:** https://gitlab.inria.fr/tanat/core/tanat
+**TanaT repository:** https://github.com/TanaT-Lab/TanaT
+
+> The history of this repository before 2026-10-26 is archived at
+> https://gitlab.inria.fr/tanat/comms/tanat-demo.
 
 ## Overview
 
@@ -106,4 +109,4 @@ it publishes the site to GitHub Pages — enable it in
 
 ## License
 
-See the main [TanaT repository](https://gitlab.inria.fr/tanat/core/tanat) for license information.
+See the main [TanaT repository](https://github.com/TanaT-Lab/TanaT) for license information.
