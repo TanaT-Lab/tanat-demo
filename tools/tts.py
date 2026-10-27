@@ -23,6 +23,12 @@ SCRIPT.md format: sections start with '## <name>' (intro, step1..stepN, end);
 text before the first heading is ignored; paragraphs are separated by blank
 lines. Writes demos/<id>/audio/<section>.mp3 and audio/manifest.json.
 Only sections whose hash (voice + normalized text) changed are regenerated.
+
+Anchors: '{#name}' placed right before the first word of a sentence marks a
+point in time. It is never spoken; the paragraph is cut there into chunks that
+are synthesized separately and joined without pause. manifest.json records
+'anchors': {name: seconds} per section (start of the chunk that follows).
+Removing every '{#name}' from SCRIPT.md must give the plain validated text.
 """
 
 from __future__ import annotations
@@ -69,6 +75,36 @@ def parse_script(text: str) -> dict[str, list[str]]:
     return sections
 
 
+ANCHOR_RE = re.compile(r"\{#([A-Za-z0-9_-]+)\}")
+
+
+def strip_anchors(text: str) -> str:
+    """Remove every '{#name}' marker (nothing else is touched)."""
+    return ANCHOR_RE.sub("", text)
+
+
+def split_chunks(paragraph: str) -> list[tuple[list[str], str]]:
+    """Cut a paragraph at its anchors: [(anchors starting here, spoken text)].
+
+    Chunks without any text (consecutive anchors, trailing anchor) are merged
+    forward; a trailing anchor yields a final chunk with empty text.
+    """
+    parts = ANCHOR_RE.split(paragraph)  # text, name, text, name, ..., text
+    chunks: list[tuple[list[str], str]] = []
+    pending: list[str] = []
+    for i, part in enumerate(parts):
+        if i % 2:
+            pending.append(part)
+            continue
+        text = " ".join(part.split())
+        if text:
+            chunks.append((pending, text))
+            pending = []
+    if pending:
+        chunks.append((pending, ""))
+    return chunks
+
+
 def section_hash(voice: str, paragraphs: list[str]) -> str:
     norm = "\n\n".join(" ".join(p.split()) for p in paragraphs)
     return hashlib.sha256(f"{voice}\n{norm}".encode("utf-8")).hexdigest()
@@ -89,22 +125,28 @@ class KokoroBackend:
         chunks = [r.audio.cpu().numpy() for r in self.pipeline(text, voice=self.voice, speed=1.0)]
         return np.concatenate(chunks) if chunks else np.zeros(0, dtype="float32")
 
-    def write(self, path: Path, parts: list, pause_samples: int) -> None:
+    def write(self, path: Path, paragraphs: list[list], pause_samples: int) -> None:
+        """paragraphs: one list of audio chunks per paragraph (no pause inside)."""
         import numpy as np  # noqa: PLC0415
         import soundfile as sf  # noqa: PLC0415
 
         silence = np.zeros(pause_samples, dtype="float32")
         seq = []
-        for i, p in enumerate(parts):
+        for i, chunks in enumerate(paragraphs):
             if i:
                 seq.append(silence)
-            seq.append(p)
+            seq.extend(chunks)
         sf.write(str(path), np.concatenate(seq), SAMPLE_RATE, format="MP3")
 
 
 def run(demo_dir: Path, voice: str, force: bool, budget: float, backend_factory=None) -> int:
     script = demo_dir / "SCRIPT.md"
     sections = parse_script(script.read_text(encoding="utf-8"))
+    for name, paras in sections.items():
+        seen = ANCHOR_RE.findall("\n".join(paras))
+        dup = sorted({a for a in seen if seen.count(a) > 1})
+        if dup:
+            raise ValueError(f"duplicate anchor(s) {dup} in section '{name}'")
     audio_dir = demo_dir / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = audio_dir / "manifest.json"
@@ -123,21 +165,29 @@ def run(demo_dir: Path, voice: str, force: bool, budget: float, backend_factory=
         h = section_hash(voice, paras)
         mp3 = audio_dir / f"{name}.mp3"
         prev = old.get(name)
-        if not force and prev and prev.get("hash") == h and mp3.exists():
+        if not force and prev and prev.get("hash") == h and "anchors" in prev and mp3.exists():
             entries[name] = prev
             rows.append((name, prev["duration"], "no"))
             continue
         if backend is None:
             backend = (backend_factory or KokoroBackend)(voice)
-        parts = [backend.synth(p) for p in paras]
-        offsets, t = [], 0.0
-        for i, part in enumerate(parts):
+        paragraphs: list[list] = []
+        offsets, anchors, t = [], {}, 0.0
+        for i, para in enumerate(paras):
             if i:
                 t += PAUSE_S
             offsets.append(round(t, 3))
-            t += len(part) / SAMPLE_RATE
-        backend.write(mp3, parts, pause)
-        entries[name] = {"hash": h, "duration": round(t, 3), "offsets": offsets}
+            chunks = []
+            for names, text in split_chunks(para):
+                for a in names:
+                    anchors[a] = round(t, 3)
+                if text:
+                    audio = backend.synth(text)
+                    chunks.append(audio)
+                    t += len(audio) / SAMPLE_RATE
+            paragraphs.append(chunks)
+        backend.write(mp3, paragraphs, pause)
+        entries[name] = {"hash": h, "duration": round(t, 3), "offsets": offsets, "anchors": anchors}
         rows.append((name, entries[name]["duration"], "yes"))
 
     manifest = {"voice": voice, "sections": entries}
