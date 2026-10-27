@@ -39,6 +39,10 @@ def check_outputs_exist():
     if not os.path.exists(DEMOS_DIR):
         return ["demos/ directory not found"]
 
+    # The landing page reads demos/index.json; regenerate if it is missing.
+    if not os.path.exists(os.path.join(DEMOS_DIR, "index.json")):
+        missing.append("demos/index.json")
+
     for demo_id in os.listdir(DEMOS_DIR):
         demo_path = os.path.join(DEMOS_DIR, demo_id)
         if not os.path.isdir(demo_path):
