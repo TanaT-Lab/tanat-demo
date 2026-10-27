@@ -117,8 +117,9 @@ from tanat.metric import EditSequenceMetric, HammingEntityMetric
 # Entity-level: distance between two admissions at the same position
 hamming = HammingEntityMetric(entity_feature="admission_type")
 
-# Sequence-level: edit distance (Optimal Matching) over the full sequence
-seq_metric = EditSequenceMetric(entity_metric=hamming)
+# Sequence-level: edit distance (Optimal Matching), normalized by length so
+# that patients are compared on their pattern, not on how many admissions they have
+seq_metric = EditSequenceMetric(entity_metric=hamming, normalize=True)
 print(seq_metric)
 
 # %% 5b
@@ -127,7 +128,7 @@ from tanat.clustering import HierarchicalClusterer
 # Group patient sequences by similarity
 clusterer = HierarchicalClusterer(
     metric=seq_metric,
-    n_clusters=4,
+    n_clusters=3,
     cluster_column="cluster",
 )
 clusterer.fit(emergency_pool)
