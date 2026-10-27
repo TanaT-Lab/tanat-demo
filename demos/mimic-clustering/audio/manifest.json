@@ -1,0 +1,87 @@
+{
+  "voice": "af_heart",
+  "sections": {
+    "intro": {
+      "hash": "624898b4ddbdde3a696567abc02126ce72f8b190a59283a795f8705903d1286c",
+      "duration": 56.55,
+      "offsets": [
+        0.0,
+        3.15,
+        26.1,
+        48.525
+      ],
+      "anchors": {
+        "welcome": 0.0,
+        "what": 3.15,
+        "syntax": 12.55,
+        "data": 18.05,
+        "entity": 26.1,
+        "sequence": 33.825,
+        "types": 37.675,
+        "mimic": 48.525
+      }
+    },
+    "step1": {
+      "hash": "1e1e022df478cbe79ef6e77560ff65949b906790826e046721e7a1b8670c40b2",
+      "duration": 29.075,
+      "offsets": [
+        0.0,
+        11.65
+      ],
+      "anchors": {}
+    },
+    "step2": {
+      "hash": "8f9aebc4f9381241c403a7fda9d6354c569cbb34ff2c584da46256b93d5a60e0",
+      "duration": 18.6,
+      "offsets": [
+        0.0,
+        9.75
+      ],
+      "anchors": {}
+    },
+    "step3": {
+      "hash": "505ce53929e5b71c1111cab41881683c8c389d84806fd81703e395efcad7987a",
+      "duration": 21.75,
+      "offsets": [
+        0.0,
+        11.4
+      ],
+      "anchors": {}
+    },
+    "step4": {
+      "hash": "29df74eb5db1e03e2f8dd9f7595b9ee1f5a54f12cdfe1c3494524e2a585b4c84",
+      "duration": 21.8,
+      "offsets": [
+        0.0,
+        9.525
+      ],
+      "anchors": {}
+    },
+    "step5": {
+      "hash": "72803a5ec5d649a3432b2c90ecc574bd6df7afeba92d0da02dc9cb47eb4375d3",
+      "duration": 28.8,
+      "offsets": [
+        0.0,
+        20.575
+      ],
+      "anchors": {}
+    },
+    "step6": {
+      "hash": "ab608de3086955a8d0133df6e63dacb68c54b9e43c9183c6f4325463c6679a91",
+      "duration": 19.4,
+      "offsets": [
+        0.0
+      ],
+      "anchors": {}
+    },
+    "end": {
+      "hash": "9ae88b2ac3ca99b45fa6af8344975d664ae3b2659ec55faf06390a33592cffce",
+      "duration": 16.375,
+      "offsets": [
+        0.0,
+        10.85
+      ],
+      "anchors": {}
+    }
+  }
+}
