@@ -1,12 +1,12 @@
 ## intro
 
-Welcome to this demonstration of tanat.
+{#welcome}Welcome to this demonstration of tanat.
 
-tanat, for Temporal Analysis of Trajectories, is a Python library for temporal sequence analysis, with a focus on patient care pathways. It brings well-established methods behind a clear, explicit and flexible syntax. Unlike time series libraries, it handles irregular, symbolic data: the kind you actually find in health records.
+{#what}tanat, for Temporal Analysis of Trajectories, is a Python library for temporal sequence analysis, with a focus on patient care pathways. {#syntax}It brings well-established methods behind a clear, explicit and flexible syntax. {#data}Unlike time series libraries, it handles irregular, symbolic data: the kind you actually find in health records.
 
-Everything starts from one building block, the entity: a single observation in a patient's journey, like a hospital stay. Chained together for one patient, entities form a sequence. tanat offers three kinds: event sequences for timestamps, state sequences for successive conditions, and interval sequences for events with a duration.
+{#entity}Everything starts from one building block, the entity: a single observation in a patient's journey, like a hospital stay. {#sequence}Chained together for one patient, entities form a sequence. {#types}tanat offers three kinds: event sequences for timestamps, state sequences for successive conditions, and interval sequences for events with a duration.
 
-Let's put this into practice on MIMIC-IV hospital admissions, and turn raw records into clusters of patient trajectories.
+{#mimic}Let's put this into practice on MIMIC-IV hospital admissions, and turn raw records into clusters of patient trajectories.
 
 ## step1
 
