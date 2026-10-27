@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Rebuild data/mimic_admissions_pool.csv from the MIMIC-IV demo database.
 
-The CSV is built from the SQLite database that ``tanat.dataset.access("mimic4")``
-downloads from Zenodo record 16368465. Each row of the ``"hosp/admissions"``
-table is kept (dates truncated to the day), plus one synthetic ``DEATH`` row per
-patient whose ``"hosp/patients".dod`` is set (the date of death, with an empty
-admission location).
+Source: MIMIC-IV Clinical Database Demo 2.2 (PhysioNet, ODbL v1.0), read from
+the SQLite copy provided by ``tanat.dataset.access("mimic4")``. Each row of the
+``"hosp/admissions"`` table is kept (dates truncated to the day), plus one
+synthetic ``DEATH`` row per patient whose ``"hosp/patients".dod`` is set (the
+date of death, with an empty admission location).
 
 Usage:
   python data/build_csv.py            # (re)write data/mimic_admissions_pool.csv
