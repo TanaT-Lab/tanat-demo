@@ -22,11 +22,17 @@ SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _DEMO_EXCLUDES = frozenset({"pipeline.py", "SCRIPT.md", "__pycache__"})
 
 
-def _require(condition, message):
-    """Exit with a clear message when a required file/dir is missing."""
+def _require(condition, message, hint=True):
+    """Exit with a clear message when a required file/dir is missing.
+
+    ``hint`` controls whether the "run generate_all.py first" suggestion is
+    printed, which only makes sense for generated outputs (not for an unsafe
+    out_dir or a missing repo dir).
+    """
     if not condition:
         print(f"error: {message}", file=sys.stderr)
-        print("Run `python generate_all.py` first.", file=sys.stderr)
+        if hint:
+            print("Run `python generate_all.py` first.", file=sys.stderr)
         sys.exit(1)
 
 
@@ -51,7 +57,11 @@ def build_site(out_dir, repo_dir=SCRIPT_DIR):
     out_dir = os.path.abspath(out_dir)
     repo_dir = os.path.abspath(repo_dir)
     if out_dir == repo_dir or os.path.commonpath([out_dir, repo_dir]) == out_dir:
-        _require(False, f"refusing to wipe the repo or a parent of it: {out_dir}")
+        _require(
+            False,
+            f"refusing to wipe the repo or a parent of it: {out_dir}",
+            hint=False,
+        )
 
     demos_src = os.path.join(repo_dir, "demos")
     index_json = os.path.join(demos_src, "index.json")

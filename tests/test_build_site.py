@@ -96,7 +96,10 @@ def test_refuses_out_dir_inside_repo(tmp_path, capsys):
     for bad in (str(root), str(root.parent), str(tmp_path)):
         with pytest.raises(SystemExit):
             build_site.build_site(bad, repo_dir=str(root))
-        assert "refusing to wipe" in capsys.readouterr().err
+        err = capsys.readouterr().err
+        assert "refusing to wipe" in err
+        # The out_dir guard must not suggest running generate_all.py.
+        assert "generate_all.py" not in err
     # The repo content must be untouched.
     assert (root / "index.html").is_file()
     assert (root / "demos" / "index.json").is_file()
