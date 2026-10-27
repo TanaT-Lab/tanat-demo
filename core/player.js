@@ -69,6 +69,10 @@ async function loadDemoConfig(demoId) {
     // existing catch in the DOMContentLoaded handler.
     await fillBlocksFromOutputs();
 
+    // Intro notes may hang on anchors of the narration ({#name} in SCRIPT.md);
+    // their times come from audio/manifest.json (written by tools/tts.py).
+    await resolveIntroNoteTimes();
+
     // Card metadata (title/subtitle) is the single source of truth in
     // <demoBasePath>demo.json, written by generate_all.py. Errors propagate to
     // the existing catch.
@@ -82,6 +86,43 @@ async function loadDemoConfig(demoId) {
 
     console.log('Demo config loaded:', demoConfig.id);
     return demoConfig;
+}
+
+/**
+ * Give every intro note that uses `at: '<anchor>'` (+ optional `delay`, seconds)
+ * its `time` = anchors[at] + delay, read from the intro section of
+ * <demoBasePath>audio/manifest.json, then order notes by time (stable).
+ * A missing manifest or an unknown anchor is a load error, never a silent skip.
+ * Notes with a plain `time` are left as they are.
+ */
+async function resolveIntroNoteTimes() {
+    const intro = demoConfig.intro;
+    const notes = intro && intro.notes;
+    if (!notes || !notes.some(n => n.at !== undefined)) return;
+
+    const response = await fetch(`${demoBasePath}audio/manifest.json`);
+    if (!response.ok) {
+        throw new Error(
+            `Failed to load audio/manifest.json (HTTP ${response.status})`
+        );
+    }
+    const manifest = await response.json();
+    const section = (intro.audio || 'audio/intro.mp3')
+        .split('/').pop().replace(/\.[^.]+$/, '');
+    const anchors = manifest.sections?.[section]?.anchors || {};
+
+    notes.forEach(note => {
+        if (note.at === undefined) return;
+        if (!Object.prototype.hasOwnProperty.call(anchors, note.at)) {
+            throw new Error(
+                `Intro note anchor '${note.at}' missing from audio/manifest.json (section '${section}')`
+            );
+        }
+        note.time = anchors[note.at] + (note.delay || 0);
+    });
+
+    const order = new Map(notes.map((n, i) => [n, i]));
+    notes.sort((a, b) => (a.time - b.time) || (order.get(a) - order.get(b)));
 }
 
 /**
