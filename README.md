@@ -93,7 +93,11 @@ python generate_all.py --list           # list demos
 pytest tests/                           # front tests need: pip install playwright && playwright install chromium
 ```
 
-There is no CI yet: a GitHub Actions workflow (outputs, tests, Pages) is planned.
+CI runs on every PR and push to `main` (`.github/workflows/pages.yml`): it
+regenerates the demo outputs with the pinned TanaT and runs the tests. On `main`
+it publishes the site to GitHub Pages — enable it in
+**Settings > Pages > Source: GitHub Actions**. Build the site locally with
+`python tools/build_site.py _site`.
 
 ## Requirements
 
