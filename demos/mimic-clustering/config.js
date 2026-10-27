@@ -21,39 +21,37 @@ const DEMO_CONFIG = {
     id: 'mimic-clustering',
     
     // ═══════════════════════════════════════════════════════════════════════════
-    // INTRO CONTENT - Notepad style with timed notes
+    // INTRO CONTENT - Notepad style, notes timed from narration anchors
     // ═══════════════════════════════════════════════════════════════════════════
     intro: {
         audio: 'audio/intro.mp3',
-        // Notes appear at specific timestamps (in seconds) synchronized with audio
-        // Adjust these timings to match your audio narration
+        // Notes hang on anchors of the narration: `at` is an {#anchor} placed
+        // in SCRIPT.md, `delay` (seconds, optional) shifts the note after the
+        // anchor. player.js turns them into times using audio/manifest.json
+        // (written by tools/tts.py), so no timestamp is set by hand.
         notes: [
-            // ─────────────────────────────────────────────────────────────────
-            // PART 1: Introduction to TanaT (0s - ~48s)
-            // ─────────────────────────────────────────────────────────────────
-            { time: 0.5, type: 'welcome', content: 'Welcome to this demonstration of <strong>TanaT</strong>' },
-            { time: 4, type: 'tagline', content: 'Temporal Analysis of Trajectories' },
-            { time: 8, type: 'bullet', content: 'Python library for temporal sequence analysis' },
-            { time: 14, type: 'bullet', content: 'Focus: patient care pathways' },
-            { time: 25, type: 'bullet', content: 'Clear, flexible, explicit code syntax' },
-            { time: 30, type: 'bullet', content: 'Handles irregular, symbolic data' },
-            { time: 40, type: 'divider' },
-            { time: 42, type: 'bullet', content: 'Building block: the <strong>Entity</strong>' },
-            { time: 44, type: 'bullet', content: 'A single observation in a patient journey' },
-            { time: 46, type: 'detail', content: 'e.g. hospital visit, clinical encounter, lab result' },
-            
-            // ─────────────────────────────────────────────────────────────────
-            // PART 2: Sequence Types Animation (~48s - ~70s)
-            // ─────────────────────────────────────────────────────────────────
-            { time: 54, type: 'divider' },
-            { time: 56, type: 'svg', id: 'sequence-types-viz' },
-            
-            // ─────────────────────────────────────────────────────────────────
-            // PART 3: MIMIC Workflow Animation (~70s - ~90s)
-            // ─────────────────────────────────────────────────────────────────
-            { time: 81, type: 'divider' },
-            { time: 81, type: 'title', content: 'Demo: MIMIC-IV Analysis' },
-            { time: 82, type: 'svg', id: 'workflow-viz' },
+            // Paragraph 1: welcome
+            { at: 'welcome', delay: 0.3, type: 'welcome', content: 'Welcome to this demonstration of <strong>TanaT</strong>' },
+
+            // Paragraph 2: what TanaT is
+            { at: 'what', delay: 0.8, type: 'tagline', content: 'Temporal Analysis of Trajectories' },
+            { at: 'what', delay: 3.8, type: 'bullet', content: 'Python library for temporal sequence analysis' },
+            { at: 'what', delay: 7.5, type: 'bullet', content: 'Focus: patient care pathways' },
+            { at: 'syntax', delay: 3.0, type: 'bullet', content: 'Clear, explicit, flexible syntax' },
+            { at: 'data', delay: 2.5, type: 'bullet', content: 'Handles irregular, symbolic data' },
+
+            // Paragraph 3: entity and the three sequence types
+            { at: 'entity', delay: 0.5, type: 'divider' },
+            { at: 'entity', delay: 2.5, type: 'bullet', content: 'Building block: the <strong>Entity</strong>' },
+            { at: 'entity', delay: 3.8, type: 'detail', content: 'A single observation in a patient journey, e.g. a hospital stay' },
+            { at: 'sequence', delay: 2.2, type: 'bullet', content: 'Chained for one patient: a <strong>Sequence</strong>' },
+            { at: 'types', delay: 0.5, type: 'divider' },
+            { at: 'types', delay: 1.5, type: 'svg', id: 'sequence-types-viz' },
+
+            // Paragraph 4: the MIMIC demo
+            { at: 'mimic', delay: 1.5, type: 'divider' },
+            { at: 'mimic', delay: 2.0, type: 'title', content: 'Demo: MIMIC-IV Analysis' },
+            { at: 'mimic', delay: 4.0, type: 'svg', id: 'workflow-viz' },
         ],
         
         // SVG visualizations referenced by notes
