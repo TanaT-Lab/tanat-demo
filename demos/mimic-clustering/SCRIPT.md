@@ -1,55 +1,49 @@
+## intro
 
 Welcome to this demonstration of tanat.
 
-tanat, which stands for Temporal Analysis of Trajectories, is an extensible Python library designed for temporal sequence analysis, with a primary focus on patient care pathways.
+tanat, for Temporal Analysis of Trajectories, is a Python library for temporal sequence analysis, with a focus on patient care pathways. It brings well-established methods behind a clear, explicit and flexible syntax. Unlike time series libraries, it handles irregular, symbolic data: the kind you actually find in health records.
 
-The philosophy behind tanat is simple. We want to simplify temporal analysis of care pathways by providing useful, well-established features, while maintaining a clear, flexible, and explicit code syntax. Unlike traditional time series libraries, tanat handles irregularly sampled, symbolic data. This is exactly the kind of data you actually find in healthcare records.
+Everything starts from one building block, the entity: a single observation in a patient's journey, like a hospital stay. Chained together for one patient, entities form a sequence. tanat offers three kinds: event sequences for timestamps, state sequences for successive conditions, and interval sequences for events with a duration.
 
-To handle this complexity, our data model relies on a simple building block: the Entity. Think of an Entity as a single observation in a patient's journey—like a specific hospital visit or a clinical encounter. When we chain these Entities together for a given individual, we create a Sequence.
+Let's put this into practice on MIMIC-IV hospital admissions, and turn raw records into clusters of patient trajectories.
 
-To capture the full diversity of temporal data, tanat allows you to navigate between three specialized formats: the EventSequence for precise timestamps, the StateSequence to follow successive conditions, and the IntervalSequence to analyze events with a specific duration.
+## step1
 
-It’s a powerful yet intuitive way to transform scattered medical observations into a structured analytical timeline.
+We start from a plain CSV of 306 admission records: one row per stay, with its start date, end date and admission type. Pandas loads it as usual.
 
-To put this into practice, we’ll use tanat to analyze hospital readmission patterns from the MIMIC-IV dataset. We’re going to take raw, messy admission records and transform them into clear, clustered patient trajectories, illustrating one possible workflow with the library
+Then a single call, build intervals, turns these rows into a pool: one interval sequence per patient, 100 in total. We declare the admission type as categorical, as the metrics will need it later. Printing the pool gives a quick summary of its sequences and features.
 
+## step2
 
-Before any analysis, we need to understand our data. tanat provides a fluent API for visualization, where you simply chain method calls to configure your plot.
+Before any analysis, let's look at the data. Visualizations use a fluent API: you chain methods to set colors and a title, then draw.
 
-For example, this histogram shows the distribution of admission types across all patients. We can clearly see that emergency admissions—shown in yellow—dominate the dataset. This type of visual insight is key to helping scientists decide on the best analysis strategy.
+This bar plot shows admission types across all patients. Emergency admissions, in yellow, clearly dominate: that is where we will focus.
 
-With this understanding, let's now filter our cohort.
+## step3
 
+Clinical studies often target a subgroup. In tanat, a criterion describes it with a Polars expression: here, patients with at least one emergency admission.
 
+The criterion selects patients, not single admissions, so each patient keeps their complete history. The cohort goes from 100 to 64 patients.
 
-Clinical studies often focus on specific patient subgroups. tanat provides a criterion-based filtering system using pandas-like query syntax.
+## step4
 
-In this step, we filter to keep only patients who have at least one emergency admission. Notice that the filter operates at the sequence level. This means we keep entire patient sequence, not just individual observations. This reduces our cohort from 100 to 64 patients, while preserving their complete admission history.
+To compare journeys, we align them on a common reference point, called T zero. Here, T zero is each patient's first emergency admission.
 
-Next, we need to align our sequences in time.
+The timeline now shows every sequence in relative time: negative days before that first emergency, positive days after. Patients admitted years apart become directly comparable.
 
+## step5
 
+Now, clustering. To compare patients, tanat builds a similarity in two layers. At the entity level, a Hamming metric compares two admissions by their type. At the sequence level, an edit distance compares whole journeys, normalized by their length, so that patients are compared on their pattern rather than on their number of stays.
 
-Temporal analysis often requires aligning sequences to a common reference point. In tanat, this is called T0, or the index date.
+A hierarchical clusterer then groups the 64 patients into three clusters, stored with each patient as static data.
 
-Here, we set T0 as the first emergency admission for each patient. After alignment, all timelines are expressed relative to this reference. Negative days represent time before the first emergency, and positive days represent time after.
+## step6
 
-The timeline visualization now shows patient sequences in relative time. This makes patterns much more comparable across patients who had different admission dates.
+Finally, one timeline per cluster, faceted in a few chained calls. Three profiles stand out: patients seen once for an emergency, patients with a few stays, sometimes ending in death, and patients readmitted again and again. This is exactly the kind of readmission pattern clinicians want to spot.
 
-Now comes the interesting part: clustering.
+## end
 
-To compare patient journeys, tanat uses a compositional approach to define similarity.
+To wrap up: in about sixty lines of code, we went from a raw CSV to meaningful patient clusters, with a workflow that stays readable and reproducible.
 
-We build our metric in two layers: first, at the Entity level, we use a Hamming metric to compare the attributes of individual observations. Then, we plug this into an Edit Distance at the Sequence level to compare entire patient journey.
-
-Once the distances are calculated, we apply a Hierarchical Clusterer. Assigning each patient to a cluster is then handled very easily through what we call static data. Here, these clusters are built taking into account both the nature of the events and their temporal order.
-
-
-Finally, we visualize our results using faceted plots, showing one timeline per cluster. This is where the tanat API really shines: you can build a complex, publication-ready figure in just a few lines of code thanks to its intuitive and flexible design.As we look at the results, each cluster reveals a distinct readmission pattern. Some patients have single emergency visits, while others show repeated admissions over extended periods.  
-
-
-To wrap up, in approximately 30 lines of code, we went from raw CSV data to meaningful patient clusters.
-
-tanat makes this possible by providing a fluent API that abstracts the complexity of temporal analysis, keeping your workflow readable and fully reproducible. It’s an intuitive way to bridge the gap between raw medical records and actionable clinical insights.
-
-Thank you for watching this demonstration. To learn more and start your own analysis, visit our documentation.
+Thank you for watching. To start your own analysis, visit the tanat documentation.
