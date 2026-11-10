@@ -92,11 +92,18 @@ print(f"After:  {len(emergency_pool.unique_ids)} patients")
 print(f"Retention: {100 * len(emergency_pool.unique_ids) / len(pool.unique_ids):.1f}%")
 
 # %% 4a
+# The cohort on the calendar, before any alignment
+SequenceVisualizer.timeline(allow_large=True) \
+    .colors(ADMISSION_COLORS) \
+    .title("Emergency Cohort (Calendar Time)") \
+    .draw(emergency_pool, entity_feature="admission_type")
+
+# %% 4b
 # Define the reference date (T0) as each patient's first emergency admission
 emergency_pool.set_t0(query=EMER, anchor="start")
 print(f"T0 set for {len(emergency_pool.t0_data())} patients")
 
-# %% 4b
+# %% 4c
 # Timeline of the emergency cohort, aligned to T0
 SequenceVisualizer.timeline(time_mode="relative", allow_large=True) \
     .colors(ADMISSION_COLORS) \
