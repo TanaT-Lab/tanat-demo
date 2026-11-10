@@ -196,7 +196,11 @@ const DEMO_CONFIG = {
             name: 'Align',
             description: 'T0 Reference',
             audio: 'audio/step4.mp3',
-            blocks: ['4a', '4b', '4c']
+            blocks: ['4a', '4b', '4c'],
+            // Two columns: the calendar-time timeline (4a) beside the aligned
+            // timeline (4c, with 4b's T0 text above it), so the audience
+            // compares before/after at a glance. Typing order stays blocks.
+            columns: [['4a'], ['4b', '4c']]
         },
         {
             id: 5,
