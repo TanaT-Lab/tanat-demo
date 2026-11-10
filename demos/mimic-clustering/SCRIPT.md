@@ -6,7 +6,7 @@
 
 {#entity}Everything starts from one building block, the entity: a single observation in a patient's journey, like a hospital stay. {#sequence}Chained together for one patient, entities form a sequence. {#types}tanat offers three kinds: event sequences for timestamps, state sequences for successive conditions, and interval sequences for events with a duration.
 
-{#mimic}Let's put this into practice on MIMIC-IV hospital admissions, and turn raw records into clusters of patient trajectories.
+{#mimic}Let's put this into practice on MIMIC-IV, a public database of real, de-identified hospital records from a Boston medical center, widely used in health research. {#open}Its open demo covers one hundred patients: every hospital stay, with its admission type, such as emergency, elective or observation. {#turn}We will turn these raw records into clusters of patient trajectories.
 
 ## step1
 
@@ -28,9 +28,11 @@ The criterion selects patients, not single admissions, so each patient keeps the
 
 ## step4
 
-To compare journeys, we align them on a common reference point, called T zero. Here, T zero is each patient's first emergency admission.
+First, the cohort on the calendar. Journeys are scattered across a whole century: MIMIC shifts each patient's dates into the future to protect privacy, so calendar dates cannot be compared between patients.
 
-The timeline now shows every sequence in relative time: negative days before that first emergency, positive days after. Patients admitted years apart become directly comparable.
+To compare journeys, we align them on a common reference point, called T zero: each patient's first emergency admission.
+
+On the aligned timeline, negative days come before that emergency, positive days after. Every journey now starts from the same point, and patterns become visible.
 
 ## step5
 
