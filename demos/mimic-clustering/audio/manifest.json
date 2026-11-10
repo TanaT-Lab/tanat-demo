@@ -2,8 +2,8 @@
   "voice": "af_heart",
   "sections": {
     "intro": {
-      "hash": "624898b4ddbdde3a696567abc02126ce72f8b190a59283a795f8705903d1286c",
-      "duration": 56.55,
+      "hash": "ae71d7b22757981762273055d02cefadf6eb954dd455a4b6be17e9e760224b63",
+      "duration": 73.425,
       "offsets": [
         0.0,
         3.15,
@@ -18,7 +18,9 @@
         "entity": 26.1,
         "sequence": 33.825,
         "types": 37.675,
-        "mimic": 48.525
+        "mimic": 48.525,
+        "open": 59.525,
+        "turn": 68.95
       }
     },
     "step1": {
@@ -49,11 +51,12 @@
       "anchors": {}
     },
     "step4": {
-      "hash": "29df74eb5db1e03e2f8dd9f7595b9ee1f5a54f12cdfe1c3494524e2a585b4c84",
-      "duration": 21.8,
+      "hash": "961b5e7ce88dac2947283bb627edbc457663789adfb73e87a0cec9c2476f46dc",
+      "duration": 32.525,
       "offsets": [
         0.0,
-        9.525
+        13.475,
+        21.675
       ],
       "anchors": {}
     },

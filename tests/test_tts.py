@@ -170,20 +170,12 @@ def test_duplicate_anchor_is_an_error(tmp_path):
 
 
 def test_mimic_script_words_unchanged_by_anchors():
-    """SCRIPT.md minus anchors is byte-identical to the validated text (main @ e8a4ba9)."""
-    import subprocess
-
-    import pytest
-
+    """SCRIPT.md minus anchors is byte-identical to the validated text
+    (tests/fixtures/mimic-script-validated.md, TASK-017 + TASK-018)."""
     repo = Path(__file__).resolve().parent.parent
-    rel = "demos/mimic-clustering/SCRIPT.md"
-    ref = subprocess.run(
-        ["git", "show", f"e8a4ba9:{rel}"], cwd=repo, capture_output=True
-    )
-    if ref.returncode != 0:
-        pytest.skip("validated reference commit e8a4ba9 not available")
-    current = (repo / rel).read_text(encoding="utf-8")
-    assert tts.strip_anchors(current).encode("utf-8") == ref.stdout
+    ref = repo / "tests" / "fixtures" / "mimic-script-validated.md"
+    current = (repo / "demos/mimic-clustering/SCRIPT.md").read_text(encoding="utf-8")
+    assert tts.strip_anchors(current) == ref.read_text(encoding="utf-8")
     # every anchor sits right before a sentence start (capital letter)
     for m in tts.ANCHOR_RE.finditer(current):
         assert current[m.end()].isalpha()

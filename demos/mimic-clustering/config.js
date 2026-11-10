@@ -49,9 +49,12 @@ const DEMO_CONFIG = {
             { at: 'types', delay: 1.5, type: 'svg', id: 'sequence-types-viz' },
 
             // Paragraph 4: the MIMIC demo
-            { at: 'mimic', delay: 1.5, type: 'divider' },
-            { at: 'mimic', delay: 2.0, type: 'title', content: 'Demo: MIMIC-IV Analysis' },
-            { at: 'mimic', delay: 4.0, type: 'svg', id: 'workflow-viz' },
+            { at: 'mimic', delay: 0.5, type: 'divider' },
+            { at: 'mimic', delay: 1.0, type: 'title', content: 'Demo: MIMIC-IV Analysis' },
+            { at: 'mimic', delay: 2.5, type: 'bullet', content: 'MIMIC-IV: real, de-identified hospital records (Boston)' },
+            { at: 'mimic', delay: 8.0, type: 'detail', content: 'Widely used in health research' },
+            { at: 'open', delay: 1.0, type: 'bullet', content: 'Open demo: 100 patients, every stay + admission type' },
+            { at: 'turn', delay: 0.5, type: 'svg', id: 'workflow-viz' },
         ],
         
         // SVG visualizations referenced by notes
