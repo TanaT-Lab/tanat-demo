@@ -196,7 +196,7 @@ const DEMO_CONFIG = {
             name: 'Align',
             description: 'T0 Reference',
             audio: 'audio/step4.mp3',
-            blocks: ['4a', '4b']
+            blocks: ['4a', '4b', '4c']
         },
         {
             id: 5,
