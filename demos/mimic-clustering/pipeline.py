@@ -94,6 +94,7 @@ print(f"Retention: {100 * len(emergency_pool.unique_ids) / len(pool.unique_ids):
 # %% 4a
 # The cohort on the calendar, before any alignment
 SequenceVisualizer.timeline(allow_large=True) \
+    .figsize(6, 4.5) \
     .colors(ADMISSION_COLORS) \
     .title("Emergency Cohort (Calendar Time)") \
     .draw(emergency_pool, entity_feature="admission_type")
@@ -106,6 +107,7 @@ print(f"T0 set for {len(emergency_pool.t0_data())} patients")
 # %% 4c
 # Timeline of the emergency cohort, aligned to T0
 SequenceVisualizer.timeline(time_mode="relative", allow_large=True) \
+    .figsize(6, 4.5) \
     .colors(ADMISSION_COLORS) \
     .title("Emergency Cohort (Relative to T0)") \
     .x_axis(label="Relative time (days)") \
@@ -140,6 +142,7 @@ print("Patients per cluster:", sizes.to_dict())
 # %% 6a
 # Timelines by cluster, aligned to T0
 SequenceVisualizer.timeline(time_mode="relative", allow_large=True) \
+    .figsize(6, 4.5) \
     .colors(ADMISSION_COLORS) \
     .title("Patient Timelines by Cluster") \
     .x_axis(label="Relative time (days)") \
