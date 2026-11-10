@@ -1031,6 +1031,10 @@ hr {
 .station-content {
     animation: fadeIn 0.3s ease-out;
     margin-bottom: 2rem;
+    /* Keep the fixed header (top) and floating nav controls (bottom) from
+       hiding the element when it is framed by scrollIntoView. */
+    scroll-margin-top: calc(var(--header-height) + 1rem);
+    scroll-margin-bottom: 6rem;
 }
 
 .station-content.inactive {
@@ -1045,6 +1049,8 @@ hr {
 /* Code blocks */
 .code-block {
     margin-bottom: 1rem;
+    scroll-margin-top: calc(var(--header-height) + 1rem);
+    scroll-margin-bottom: 6rem;
 }
 
 .code-header {
@@ -1093,6 +1099,8 @@ code {
     margin-top: 0.5rem;
     text-align: left;
     font-family: 'Fira Code', 'Consolas', monospace;
+    scroll-margin-top: calc(var(--header-height) + 1rem);
+    scroll-margin-bottom: 6rem;
 }
 
 /* Figure output */
@@ -1107,11 +1115,13 @@ code {
     margin-top: 0.5rem;
     min-height: 200px;
     overflow: hidden;
+    scroll-margin-top: calc(var(--header-height) + 1rem);
+    scroll-margin-bottom: 6rem;
 }
 
 .figure-output img {
     max-width: 100%;
-    max-height: 400px;
+    max-height: 60vh;
     height: auto;
     border-radius: 4px;
     object-fit: contain;

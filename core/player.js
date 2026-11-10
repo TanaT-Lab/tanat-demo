@@ -600,7 +600,8 @@ async function goToStation(stationNum) {
     }
     
     updatePipeline();
-    stationEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Step start: the step header at the top, under the fixed header.
+    stationEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
     
     // Type each code block
     for (const block of station.blocks) {
@@ -616,6 +617,17 @@ async function goToStation(stationNum) {
         
         if (outputEl) {
             outputEl.style.visibility = 'visible';
+            // Wait for the figure image to be decoded so the layout does not
+            // shift after the scroll position was computed.
+            const img = outputEl.querySelector('img');
+            if (img) {
+                await waitForFigure(img);
+                if (!isSessionValid(mySessionId)) return;
+            }
+            // When an output appears: make it fully visible.
+            if (!isElementVisible(outputEl)) {
+                outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
         }
         
         await sleep(200);
@@ -624,7 +636,17 @@ async function goToStation(stationNum) {
     if (!isSessionValid(mySessionId)) return;
     
     await sleep(300);
-    stationEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // Step end: if the whole step fits on screen, align it at the top under the
+    // header; otherwise leave the newest output fully visible. Never center an
+    // element taller than the visible area.
+    if (stationEl.getBoundingClientRect().height <= visibleHeight()) {
+        stationEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        const outputs = Array.from(stationEl.querySelectorAll('.terminal-output, .figure-output'))
+            .filter(o => o.style.visibility !== 'hidden');
+        const newest = outputs[outputs.length - 1];
+        if (newest) newest.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
     
     isTyping = false;
     isDisplayComplete = true;
@@ -639,6 +661,36 @@ async function goToStation(stationNum) {
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// The visible area for framing: between the bottom of the fixed header and the
+// top of the floating nav controls (which sit at the bottom of the viewport).
+function framingBounds() {
+    const header = document.querySelector('.main-header');
+    const headerBottom = header && header.getBoundingClientRect().height > 0
+        ? header.getBoundingClientRect().bottom : 0;
+    const nav = document.querySelector('.global-nav-controls');
+    const bottom = nav ? nav.getBoundingClientRect().top : window.innerHeight;
+    return { top: headerBottom, bottom: bottom };
+}
+
+function visibleHeight() {
+    const b = framingBounds();
+    return b.bottom - b.top;
+}
+
+function isElementVisible(el) {
+    const r = el.getBoundingClientRect();
+    const b = framingBounds();
+    return r.top >= b.top && r.bottom <= b.bottom;
+}
+
+function waitForFigure(img) {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(resolve => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+    });
 }
 
 function isSessionValid(sessionId) {
@@ -677,8 +729,11 @@ async function typewriter(element, text, speed, sessionId) {
         const result = hljs.highlight(currentText, { language: 'python' });
         element.innerHTML = result.value;
         
-        if (i % 25 === 0) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // While typing: scroll only when the code block leaves the visible
+        // area, not on a fixed character count, so overlapping smooth scrolls
+        // do not make the page jerk.
+        if (!isElementVisible(element)) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
         
         const continueTyping = await pauseAwareSleep(speed, sessionId);
@@ -686,7 +741,7 @@ async function typewriter(element, text, speed, sessionId) {
     }
     
     if (isSessionValid(sessionId)) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 
