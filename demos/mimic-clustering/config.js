@@ -163,7 +163,14 @@ const DEMO_CONFIG = {
     // OUTRO CONTENT
     // ═══════════════════════════════════════════════════════════════════════════
     outro: {
-        audio: 'audio/end.mp3'
+        audio: 'audio/end.mp3',
+        // Key messages on the final screen; {lines} = count of non-empty,
+        // non-comment code lines of all shown blocks (computed by the player).
+        takeaways: [
+            'Raw CSV to patient clusters in {lines} lines of code',
+            'Readable, chainable API',
+            'Reproducible: every output here really ran'
+        ]
     },
     
     // ═══════════════════════════════════════════════════════════════════════════
@@ -176,6 +183,7 @@ const DEMO_CONFIG = {
         {
             id: 1,
             name: 'Load',
+            api: 'build_intervals()',
             description: 'CSV to Pool',
             audio: 'audio/step1.mp3',
             blocks: ['1a', '1b']
@@ -183,6 +191,7 @@ const DEMO_CONFIG = {
         {
             id: 2,
             name: 'Visualize',
+            api: 'barplot()',
             description: 'Histogram',
             audio: 'audio/step2.mp3',
             blocks: ['2b']
@@ -190,6 +199,7 @@ const DEMO_CONFIG = {
         {
             id: 3,
             name: 'Filter',
+            api: 'EntityCriterion',
             description: 'Criterion',
             audio: 'audio/step3.mp3',
             blocks: ['3a', '3b']
@@ -197,6 +207,7 @@ const DEMO_CONFIG = {
         {
             id: 4,
             name: 'Align',
+            api: 'set_t0()',
             description: 'T0 Reference',
             audio: 'audio/step4.mp3',
             blocks: ['4a', '4b', '4c'],
@@ -208,6 +219,7 @@ const DEMO_CONFIG = {
         {
             id: 5,
             name: 'Cluster',
+            api: 'EditSequenceMetric + HierarchicalClusterer',
             description: 'Edit Distance',
             audio: 'audio/step5.mp3',
             blocks: ['5a', '5b']
@@ -215,6 +227,7 @@ const DEMO_CONFIG = {
         {
             id: 6,
             name: 'Analyze',
+            api: 'timeline().facet()',
             description: 'Faceted Viz',
             audio: 'audio/step6.mp3',
             blocks: ['6a']
