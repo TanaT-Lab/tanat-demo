@@ -240,53 +240,85 @@ function updateMobilePipeline() {
 }
 
 /**
- * Generate station elements from config
+ * Render a single block's markup: its code block plus its output area (figure
+ * or terminal text). A block with neither figure nor output renders no output
+ * area. The code element id (`code-<id>`) and output id (`output-<id>`) are
+ * what goToStation() types and reveals, so DOM placement (flat vs columns)
+ * does not change the typing order.
+ */
+function renderBlock(block) {
+    let outputHtml = '';
+
+    if (block.figure) {
+        // Figure output - images are in demo's outputs/ folder,
+        // file name comes from outputs.json
+        outputHtml = `
+            <div class="figure-output" id="output-${block.id}" style="visibility: hidden;">
+                <img src="${demoBasePath}outputs/${block.figure}" alt="Output visualization">
+            </div>
+        `;
+    } else if (block.output !== null && block.output !== undefined) {
+        // Terminal text output - use textContent to avoid HTML indentation issues
+        const outputDiv = document.createElement('div');
+        outputDiv.className = 'terminal-output';
+        outputDiv.id = `output-${block.id}`;
+        outputDiv.style.visibility = 'hidden';
+        outputDiv.textContent = block.output;
+        outputHtml = outputDiv.outerHTML;
+    }
+
+    return `
+        <div class="code-block">
+            <div class="code-header">
+                <span class="code-label">Python</span>
+            </div>
+            <pre><code id="code-${block.id}" class="language-python"></code></pre>
+        </div>
+        ${outputHtml}
+    `;
+}
+
+/**
+ * Generate station elements from config. A station may carry an optional
+ * `columns` field (array of arrays of block ids, e.g. [['4a'], ['4b', '4c']])
+ * to lay those blocks out side by side; each column stacks its blocks (code +
+ * output) as today. Stations without `columns` render exactly as before.
+ * Typing order is always station.blocks.
  */
 function generateStations() {
     const container = document.getElementById('stations-container');
     if (!container || !demoConfig) return;
-    
-    container.innerHTML = demoConfig.stations.map(station => `
-        <section id="station-${station.id}" class="station-content" style="display: none;">
-            <div class="station-header">
-                <span class="step-badge">Step ${station.id}</span>
-                <h2 class="station-title">${station.name}: ${station.description}</h2>
-            </div>
-            
-            ${station.blocks.map(block => {
-                let outputHtml = '';
-                
-                if (block.figure) {
-                    // Figure output - images are in demo's outputs/ folder,
-                    // file name comes from outputs.json
-                    outputHtml = `
-                        <div class="figure-output" id="output-${block.id}" style="visibility: hidden;">
-                            <img src="${demoBasePath}outputs/${block.figure}" alt="Output visualization">
+
+    container.innerHTML = demoConfig.stations.map(station => {
+        let bodyHtml;
+        if (station.columns) {
+            bodyHtml = `
+                <div class="columns-grid">
+                    ${station.columns.map(columnIds => `
+                        <div class="column">
+                            ${columnIds.map(id => {
+                                const block = station.blocks.find(b => b.id === id);
+                                return renderBlock(block);
+                            }).join('')}
                         </div>
-                    `;
-                } else if (block.output !== null && block.output !== undefined) {
-                    // Terminal text output - use textContent to avoid HTML indentation issues
-                    const outputDiv = document.createElement('div');
-                    outputDiv.className = 'terminal-output';
-                    outputDiv.id = `output-${block.id}`;
-                    outputDiv.style.visibility = 'hidden';
-                    outputDiv.textContent = block.output;
-                    outputHtml = outputDiv.outerHTML;
-                }
-                // A block with neither figure nor output renders no output area
-                
-                return `
-                    <div class="code-block">
-                        <div class="code-header">
-                            <span class="code-label">Python</span>
-                        </div>
-                        <pre><code id="code-${block.id}" class="language-python"></code></pre>
-                    </div>
-                    ${outputHtml}
-                `;
-            }).join('')}
-        </section>
-    `).join('');
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            bodyHtml = station.blocks.map(renderBlock).join('');
+        }
+
+        return `
+            <section id="station-${station.id}" class="station-content" style="display: none;">
+                <div class="station-header">
+                    <span class="step-badge">Step ${station.id}</span>
+                    <h2 class="station-title">${station.name}: ${station.description}</h2>
+                </div>
+
+                ${bodyHtml}
+            </section>
+        `;
+    }).join('');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
