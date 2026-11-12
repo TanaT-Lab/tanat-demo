@@ -632,8 +632,16 @@ async function goToStation(stationNum) {
     }
     
     updatePipeline();
-    // Step start: the step header at the top, under the fixed header.
-    stationEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Step start: the step header lands at the top of the visible area, just
+    // under the fixed header. Wait for that scroll to settle before typing so
+    // the header really reaches the top and the reading-line follow measures
+    // the code from its step-start position (not the stale one).
+    {
+        const b = framingBounds();
+        scrollToY(stationEl.getBoundingClientRect().top + window.scrollY - (b.top + 16));
+    }
+    await scrollSettled();
+    if (!isSessionValid(mySessionId)) return;
     
     // Type each code block
     for (const block of station.blocks) {
@@ -656,9 +664,17 @@ async function goToStation(stationNum) {
                 await waitForFigure(img);
                 if (!isSessionValid(mySessionId)) return;
             }
-            // When an output appears: make it fully visible.
+            // When an output appears: if it fits in the visible area and is not
+            // fully visible, target so its bottom sits just above the bottom of
+            // the visible area; if taller than the visible area, its top at the
+            // top of the visible area.
             if (!isElementVisible(outputEl)) {
-                outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const b = framingBounds();
+                if (outputEl.getBoundingClientRect().height <= (b.bottom - b.top)) {
+                    scrollToY(outputEl.getBoundingClientRect().bottom + window.scrollY - (b.bottom - 24));
+                } else {
+                    scrollToY(outputEl.getBoundingClientRect().top + window.scrollY - (b.top + 16));
+                }
             }
         }
         
@@ -672,12 +688,16 @@ async function goToStation(stationNum) {
     // header; otherwise leave the newest output fully visible. Never center an
     // element taller than the visible area.
     if (stationEl.getBoundingClientRect().height <= visibleHeight()) {
-        stationEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const b = framingBounds();
+        scrollToY(stationEl.getBoundingClientRect().top + window.scrollY - (b.top + 16));
     } else {
         const outputs = Array.from(stationEl.querySelectorAll('.terminal-output, .figure-output'))
             .filter(o => o.style.visibility !== 'hidden');
         const newest = outputs[outputs.length - 1];
-        if (newest) newest.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (newest) {
+            const b = framingBounds();
+            scrollToY(newest.getBoundingClientRect().top + window.scrollY - (b.top + 16));
+        }
     }
     
     isTyping = false;
@@ -724,6 +744,107 @@ function isElementVisible(el) {
     return r.top >= b.top && r.bottom <= b.bottom;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCROLL OWNER
+// ═══════════════════════════════════════════════════════════════════════════════
+// One function owns all station-flow scrolling. scrollToY(y) sets a target
+// scroll position; a single requestAnimationFrame loop eases window.scrollY
+// toward it (~25% of the remaining distance per frame, snapping under 1 px).
+// Setting a new target while moving just updates the target (no restart, no
+// jerk). With prefers-reduced-motion: reduce it jumps directly. A user
+// wheel / touchmove / scroll key cancels the auto-follow; it resumes when the
+// next block starts typing and scrollToY is called again.
+
+let scrollTargetY = null;
+let scrollRafId = null;
+
+function cancelAutoScroll() {
+    scrollTargetY = null;
+    if (scrollRafId !== null) {
+        cancelAnimationFrame(scrollRafId);
+        scrollRafId = null;
+    }
+}
+
+// The real reachable scroll range right now (the page's scrollable height can
+// change as stations show/hide, so a target must be re-checked against this).
+function scrollBounds() {
+    const maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    return { min: 0, max: maxY };
+}
+
+function clampToBounds(y) {
+    const b = scrollBounds();
+    return Math.max(b.min, Math.min(b.max, y));
+}
+
+function scrollToY(targetY) {
+    // Clamp to the page's real scroll bounds so the easing can always settle
+    // (a target above 0 or below the max scrollable can never be reached).
+    const clamped = clampToBounds(targetY);
+    scrollTargetY = clamped;
+    if (scrollRafId !== null) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        window.scrollTo(0, clamped);
+        scrollTargetY = null;
+        return;
+    }
+    const step = () => {
+        if (scrollTargetY === null) { scrollRafId = null; return; }
+        // Re-clamp the target to the current bounds each frame: if the page
+        // shrank after scrollToY was called the stored target can be beyond
+        // the max scroll, which would otherwise never settle.
+        const reachable = clampToBounds(scrollTargetY);
+        const current = window.scrollY;
+        const delta = reachable - current;
+        // Snap once the remaining delta is small enough that easing would
+        // round to no progress (window.scrollY is an integer, so a delta of
+        // ~2 px never converges otherwise).
+        if (Math.abs(delta) <= 2) {
+            window.scrollTo(0, reachable);
+            scrollTargetY = null;
+            scrollRafId = null;
+            return;
+        }
+        window.scrollTo(0, current + delta * 0.25);
+        scrollRafId = requestAnimationFrame(step);
+    };
+    scrollRafId = requestAnimationFrame(step);
+}
+
+// Resolve once the auto-scroll has settled on its target (or is idle). Used so a
+// step-start scroll can finish placing the header at the top of the visible area
+// before typing starts measuring positions against the reading line.
+function scrollSettled() {
+    return new Promise(resolve => {
+        if (scrollTargetY === null) { resolve(); return; }
+        let prevY = window.scrollY;
+        const check = () => {
+            // A target that was clamped at scrollToY-call time can become
+            // unreachable if the page's scrollable height shrinks afterwards
+            // (e.g. the previous station's display changes). When scrollY stops
+            // advancing at a boundary, treat the scroll as settled rather than
+            // waiting forever on an unreachable target.
+            const y = window.scrollY;
+            if (scrollTargetY === null || Math.abs(clampToBounds(scrollTargetY) - y) <= 2
+                || y === prevY) {
+                resolve();
+            } else {
+                prevY = y;
+                requestAnimationFrame(check);
+            }
+        };
+        requestAnimationFrame(check);
+    });
+}
+
+window.addEventListener('wheel', cancelAutoScroll, { passive: true });
+window.addEventListener('touchmove', cancelAutoScroll, { passive: true });
+window.addEventListener('keydown', e => {
+    const scrollKeys = ['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar'];
+    if (scrollKeys.includes(e.key)) cancelAutoScroll();
+});
+
 function waitForFigure(img) {
     if (img.complete && img.naturalWidth > 0) return Promise.resolve();
     return new Promise(resolve => {
@@ -768,19 +889,22 @@ async function typewriter(element, text, speed, sessionId) {
         const result = hljs.highlight(currentText, { language: 'python' });
         element.innerHTML = result.value;
         
-        // While typing: scroll only when the code block leaves the visible
-        // area, not on a fixed character count, so overlapping smooth scrolls
-        // do not make the page jerk.
-        if (!isElementVisible(element)) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        // While typing: keep the line being typed on the reading line (55% of
+        // the visible height). The page only ever scrolls down (monotonic):
+        // when the bottom of the code being typed goes below the reading line,
+        // the target moves so the bottom sits on the line; above the line,
+        // nothing moves. Measuring the typed element (never the station layout)
+        // also works with step 4's side-by-side columns.
+        const b = framingBounds();
+        const readingLine = b.top + 0.55 * (b.bottom - b.top);
+        const codeBottom = element.getBoundingClientRect().bottom;
+        if (codeBottom > readingLine) {
+            // 12 px of headroom so the easing lag never lets the line sink below it.
+            scrollToY(codeBottom + window.scrollY - (readingLine - 12));
         }
         
         const continueTyping = await pauseAwareSleep(speed, sessionId);
         if (!continueTyping) return;
-    }
-    
-    if (isSessionValid(sessionId)) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
 
@@ -983,7 +1107,10 @@ function showStationInstantly(stationNum) {
     updateGlobalNavButtons();
     
     const stationEl = document.getElementById('station-' + stationNum);
-    if (stationEl) stationEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (stationEl) {
+        const b = framingBounds();
+        scrollToY(stationEl.getBoundingClientRect().top + window.scrollY - (b.top + 16));
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1173,7 +1300,10 @@ function backToScrollView() {
     isZoomedOut = false;
     
     const lastStation = document.getElementById('station-' + currentStation);
-    if (lastStation) lastStation.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (lastStation) {
+        const b = framingBounds();
+        scrollToY(lastStation.getBoundingClientRect().top + window.scrollY - (b.top + 16));
+    }
 }
 
 function goBackToLanding() {
