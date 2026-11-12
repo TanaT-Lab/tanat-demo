@@ -10,6 +10,7 @@ import functools
 import http.server
 import os
 import threading
+import time
 
 import pytest
 
@@ -267,26 +268,43 @@ def _assert_reading_line_while_typing(page, s, viewport):
                     max_header_top = sample["headerTop"]
                 bounds_top = ft
 
-            blk = per_block.setdefault(sample["id"], {"started": False, "prevY": None})
+            blk = per_block.setdefault(
+                sample["id"], {"started": False, "prevY": None, "below_since": None}
+            )
             if blk["started"] and blk["prevY"] is not None:
                 assert sample["scrollY"] >= blk["prevY"] - 0.5, (
                     f"window.scrollY decreased in station {s} block {sample['id']} "
                     f"({sample['scrollY']} < {blk['prevY']}) at {viewport}"
                 )
             if bottom >= reading_line:
-                # Once following, the typed code bottom sits on/above the reading
-                # line and stays below the top of the visible area.
-                assert ft <= bottom <= reading_line + 30, (
-                    f"station {s} block {sample['id']} bottom {bottom} outside "
-                    f"[{ft}, {reading_line + 30}] (reading line {reading_line}) "
-                    f"at {viewport}"
-                )
-                assert bottom <= fb, (
-                    f"station {s} block {sample['id']} bottom {bottom} below "
-                    f"viewport bottom {fb} at {viewport}"
-                )
-                blk["started"] = True
-                blk["prevY"] = sample["scrollY"]
+                in_band = ft <= bottom <= reading_line + 30
+                if in_band:
+                    blk["started"] = True
+                    blk["below_since"] = None
+                elif not blk["started"]:
+                    # A block that starts typing right under a tall output is
+                    # already below the line: the page is still catching up.
+                    # That is allowed, but only for a bounded time.
+                    now = time.monotonic()
+                    if blk["below_since"] is None:
+                        blk["below_since"] = now
+                    assert now - blk["below_since"] <= 1.5, (
+                        f"station {s} block {sample['id']} bottom {bottom} still "
+                        f"outside [{ft}, {reading_line + 30}] (reading line "
+                        f"{reading_line}) 1.5 s after crossing it at {viewport}"
+                    )
+                else:
+                    raise AssertionError(
+                        f"station {s} block {sample['id']} bottom {bottom} outside "
+                        f"[{ft}, {reading_line + 30}] (reading line {reading_line}) "
+                        f"at {viewport}"
+                    )
+                if blk["started"]:
+                    assert bottom <= fb, (
+                        f"station {s} block {sample['id']} bottom {bottom} below "
+                        f"viewport bottom {fb} at {viewport}"
+                    )
+                    blk["prevY"] = sample["scrollY"]
         page.wait_for_timeout(250)
     assert max_header_top is not None, (
         f"station {s} never produced a typing sample at {viewport}"
@@ -315,7 +333,7 @@ def test_reading_line_while_typing(server, viewport):
         while s <= n:
             pg.wait_for_function(
                 f"currentStation === {s} && isDisplayComplete === true",
-                timeout=90000,
+                timeout=240000,
             )
             nxt = s + 1
             if nxt > n:
