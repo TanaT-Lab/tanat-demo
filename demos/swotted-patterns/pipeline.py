@@ -163,16 +163,16 @@ for r in range(R):
 
 # %% 5c
 # Each pattern as a heatmap: its 6 heaviest codes (rows) over its 7 days (columns)
-fig, axes = plt.subplots(3, 2, figsize=(8, 7.5), sharex=True)
+fig, axes = plt.subplots(2, 3, figsize=(13, 5.6), sharex=True)
 for r, ax in enumerate(axes.flat[:R]):
     top = top_of(r, 6)
     ax.imshow(patterns[r][top], aspect="auto", cmap="magma", vmin=0)
-    ax.set_yticks(range(6), [f"{codes[i]} {titles[codes[i]][:26]}" for i in top], fontsize=6)
+    ax.set_yticks(range(6), [f"{codes[i]} {titles[codes[i]][:26]}" for i in top], fontsize=8)
     ax.set_xticks(range(Tw), range(1, Tw + 1))
     ax.set_title(f"Pattern {r + 1}", color=PATTERN_COLORS[r])
 axes.flat[R].axis("off")
 fig.supxlabel("Day of the pattern window")
-fig.subplots_adjust(hspace=0.3, wspace=1.2)
+fig.subplots_adjust(hspace=0.3, wspace=1.4)
 
 # %% 6a
 # Back into TanaT: the pattern a patient activates the most
