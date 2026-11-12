@@ -326,6 +326,10 @@ def test_reading_line_while_typing(server, viewport):
         pg.wait_for_selector("#transition-start-btn", state="visible", timeout=5000)
         pg.click("#transition-start-btn")
         pg.wait_for_timeout(500)
+        # The test drives the stations itself: without this, a narration that
+        # ends between "station done" and the Next click auto-advances too, and
+        # the click skips a station.
+        pg.evaluate("audioElement.removeEventListener('ended', onAudioEnded)")
         pg.click("#global-next-btn")
 
         s = 1
