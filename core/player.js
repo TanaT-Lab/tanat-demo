@@ -1132,11 +1132,8 @@ function showFullScript() {
         }
     });
     
-    // Apply split-view for final display
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.classList.add('split-view');
-    }
+    // Final view (core/final-view.js) replaces the stations
+    showFinalView();
     
     // Add full-script-view class to body for CSS targeting
     document.body.classList.add('full-script-view');
@@ -1160,10 +1157,7 @@ function showFullScript() {
 function backToScrollView() {
     if (!isZoomedOut) return;
     
-    const mainContent = document.querySelector('.main-content');
-    if (mainContent) {
-        mainContent.classList.remove('split-view');
-    }
+    hideFinalView();
     
     // Remove full-script-view class from body
     document.body.classList.remove('full-script-view');

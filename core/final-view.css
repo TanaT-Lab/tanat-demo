@@ -1,0 +1,204 @@
+/* Final view: notebook (left) + workflow summary (right). Loaded after styles.css. */
+
+#final-view { display: none; }
+
+body.full-script-view .main-content {
+    max-width: none;
+    padding: 0;
+    height: calc(100vh - var(--header-height));
+    min-height: 0;
+    overflow: hidden;
+}
+
+body.full-script-view #final-view {
+    display: grid;
+    grid-template-columns: 58fr 42fr;
+    gap: 1.5rem;
+    height: 100%;
+    padding: 1rem 1.5rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.fv-notebook {
+    overflow-y: auto;
+    min-height: 0;
+    min-width: 0;
+    padding-right: 0.5rem;
+}
+
+.fv-step-heading {
+    color: var(--accent-blue);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin: 1.2rem 0 0.6rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 3px;
+}
+.fv-step:first-child .fv-step-heading { margin-top: 0; }
+
+.fv-cell {
+    display: grid;
+    grid-template-columns: 4.2rem minmax(0, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+}
+.fv-gutter {
+    color: var(--accent-orange);
+    font-size: 0.75rem;
+    padding-top: 0.8rem;
+    text-align: right;
+    white-space: nowrap;
+}
+.fv-cell-body { min-width: 0; }
+.fv-code { padding: 0.8rem; }
+.fv-code code {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    display: block;
+    background: transparent;
+    padding: 0;
+}
+.fv-out {
+    margin-top: 0.4rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 6px;
+}
+.fv-out-pre {
+    background: transparent;
+    border: 0;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow: hidden;
+}
+.fv-collapsed .fv-out-pre { max-height: calc(8 * 1.4em + 1.2rem); }
+.fv-toggle {
+    background: none;
+    border: 0;
+    color: var(--accent-blue);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0 0.8rem 0.5rem;
+}
+.fv-out-fig { padding: 0.5rem; }
+.fv-out-fig img { display: block; width: 100%; height: auto; border-radius: 4px; }
+
+.fv-flash { animation: fvFlash 1.4s ease-out; }
+@keyframes fvFlash {
+    0%, 40% { background-color: rgba(88, 166, 255, 0.28); }
+    100% { background-color: transparent; }
+}
+
+/* Right panel */
+.fv-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+}
+.fv-diagram { width: 100%; height: auto; flex: 0 0 auto; }
+.fv-arrow { fill: none; stroke: var(--text-muted); stroke-width: 1.6; }
+.fv-arrowhead { fill: var(--text-muted); }
+.fv-node { cursor: pointer; outline: none; }
+.fv-node rect {
+    fill: var(--bg-secondary);
+    stroke: var(--border-color);
+    stroke-width: 1.5;
+    transition: stroke 0.15s, fill 0.15s;
+}
+.fv-node:hover rect, .fv-node:focus-visible rect { stroke: var(--accent-blue); fill: var(--bg-tertiary); }
+.fv-node-num { fill: var(--accent-blue); font-size: 12px; font-weight: 700; }
+.fv-node-name { fill: var(--text-primary); font-size: 15px; font-weight: 600; }
+.fv-node-api { fill: var(--accent-green); font-size: 10.5px; }
+.fv-animate .fv-node { animation: fvNodeIn 0.4s ease-out both; animation-delay: calc(var(--i) * 150ms); }
+@keyframes fvNodeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .fv-animate .fv-node { animation: none; }
+    #final-view, .fv-flash { animation: none; }
+}
+
+.fv-thumb {
+    flex: 1 1 0;
+    min-height: 60px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.3rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+}
+.fv-thumb:hover { border-color: var(--accent-blue); }
+.fv-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; min-height: 0; }
+
+.fv-takeaways { list-style: none; flex: 0 0 auto; }
+.fv-takeaways li {
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    padding-left: 1.4rem;
+    position: relative;
+}
+.fv-takeaways li::before {
+    content: "\2713";
+    color: var(--accent-green);
+    position: absolute;
+    left: 0;
+}
+
+.fv-cta { flex: 0 0 auto; display: flex; flex-direction: column; gap: 0.5rem; }
+.fv-install {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.4rem 0.4rem 0.4rem 0.8rem;
+}
+.fv-install code { color: var(--accent-green); font-size: 0.9rem; }
+.fv-copy {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+.fv-copy:hover { border-color: var(--accent-blue); }
+.fv-links { display: flex; gap: 1.2rem; }
+.fv-links a { color: var(--accent-blue); font-size: 0.85rem; text-decoration: none; }
+.fv-links a:hover { text-decoration: underline; }
+
+/* Below 1200 px: right panel on top, notebook below, page scrolls. */
+@media (max-width: 1200px) {
+    body.full-script-view .main-content {
+        height: auto;
+        overflow: visible;
+        padding-bottom: 100px;
+    }
+    body.full-script-view #final-view {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        padding: 0.8rem;
+        gap: 1rem;
+    }
+    .fv-side { order: -1; overflow: visible; }
+    .fv-thumb { display: none; }
+    .fv-notebook { overflow: visible; padding-right: 0; }
+    .fv-step-heading { scroll-margin-top: calc(var(--header-height) + 1rem); }
+    .fv-cell { grid-template-columns: minmax(0, 1fr); gap: 0.2rem; }
+    .fv-gutter { text-align: left; padding-top: 0; }
+}
