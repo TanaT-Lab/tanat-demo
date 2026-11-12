@@ -839,42 +839,46 @@ hr {
     border-color: var(--text-muted);
 }
 
-/* Global Navigation Controls - fixed bottom right, draggable */
+/* Global Navigation Controls.
+   The controls share one DOM element but change placement per layout:
+   - demo: fixed top-right, vertically centred inside the fixed header bar;
+   - intro: compact, floating in the top-right corner (no header there);
+   - mobile: sticky footer (see the mobile block below).
+   The old draggable handle is gone. */
 .global-nav-controls {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    top: 0;
+    right: 0;
     z-index: 1000;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
+    height: var(--header-height);
+    padding: 0 2rem;
+    font-size: 14px;
+}
+
+/* Intro layout has no header, so the controls float in the corner. They must
+   stay inside the intro screen's top padding so they never cover the notepad:
+   the notepad starts below the 3rem top padding (48px), so keep this bar short
+   and flush with the very top. */
+body.layout-intro .global-nav-controls {
+    top: 0.5rem;
+    right: 0.5rem;
+    height: auto;
+    padding: 4px;
+    gap: 4px;
     background-color: var(--bg-secondary);
-    padding: 8px;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--border-color);
-    /* Prevent zoom scaling */
-    transform-origin: bottom right;
-    font-size: 14px;
 }
 
-.nav-drag-handle {
-    cursor: grab;
-    color: var(--text-muted);
+body.layout-intro .global-nav-btn {
     padding: 4px 8px;
-    font-size: 14px;
-    user-select: none;
-    border-right: 1px solid var(--border-color);
-    margin-right: 4px;
-}
-
-.nav-drag-handle:active {
-    cursor: grabbing;
-}
-
-.global-nav-controls.dragging {
-    opacity: 0.9;
-    cursor: grabbing;
+    font-size: 12px;
+    gap: 4px;
 }
 
 .global-nav-btn {
@@ -882,14 +886,28 @@ hr {
     color: var(--text-primary);
     border: 1px solid var(--border-color);
     border-radius: 6px;
-    padding: 8px 14px;
-    font-size: 14px;
+    padding: 6px 10px;
+    font-size: 13px;
     font-family: 'JetBrains Mono', monospace;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    min-width: 80px;
+    min-width: 0;
     text-align: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+body.layout-demo .global-nav-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.nav-icon {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
 }
 
 .global-nav-btn:hover:not(:disabled) {
@@ -906,7 +924,11 @@ hr {
 .global-nav-btn.reveal {
     color: var(--accent-orange);
     border-color: var(--accent-orange);
-    margin-left: 15px;
+    margin-left: 12px;
+}
+
+body.layout-intro .global-nav-btn.reveal {
+    margin-left: 6px;
 }
 
 .global-nav-btn.reveal:hover:not(:disabled) {
@@ -926,7 +948,6 @@ hr {
 
 .global-nav-btn.back {
     color: var(--text-muted);
-    margin-right: 10px;
 }
 
 .global-nav-btn.back:hover {
@@ -934,20 +955,44 @@ hr {
     border-color: var(--text-muted);
 }
 
-/* Responsive adjustments for small screens */
-@media (max-width: 600px) {
-    .global-nav-controls {
-        bottom: 12px;
-        right: 12px;
-        padding: 6px;
-        gap: 6px;
-    }
-    
-    .global-nav-btn {
-        padding: 6px 10px;
-        font-size: 12px;
-        min-width: 60px;
-    }
+/* Hide the icon that does not apply to the current pause state. */
+.global-nav-btn.pause .play-icon { display: none; }
+.global-nav-btn.pause.playing .pause-icon { display: none; }
+.global-nav-btn.pause.playing .play-icon { display: inline-block; }
+
+/* Narration progress bar: a 3px track just under the header, full width of the
+   main column; at the very top in the intro layout. Hidden on the transition
+   screen (via the layout class) and while no track is loaded. */
+.progress-bar-container {
+    position: fixed;
+    top: var(--header-height);
+    left: var(--sidebar-width);
+    right: 0;
+    height: 3px;
+    background-color: var(--bg-tertiary);
+    z-index: 999;
+    overflow: hidden;
+    /* The critical inline style hides it on first paint; re-show it here so it
+       is visible in the intro and demo layouts (the transition layout rule
+       below keeps it hidden there). */
+    display: block;
+}
+
+body.layout-intro .progress-bar-container {
+    top: 0;
+    left: 0;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: var(--accent-blue);
+    transition: width 0.1s linear;
+}
+
+/* Hide the progress bar on the transition screen and when empty. */
+body.layout-transition .progress-bar-container {
+    display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -959,8 +1004,10 @@ hr {
     top: 0;
     left: var(--sidebar-width);
     right: 0;
+    height: var(--header-height);
+    box-sizing: border-box;
     background-color: var(--bg-primary);
-    padding: 1rem 2rem;
+    padding: 0 2rem;
     z-index: 100;
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -1902,9 +1949,11 @@ code {
     /* === GLOBAL NAV CONTROLS (STICKY FOOTER) === */
     .global-nav-controls {
         position: fixed;
+        top: auto;
         bottom: 0;
         left: 0;
         right: 0;
+        height: auto;
         border-radius: 0;
         padding: 12px 16px;
         justify-content: center;
@@ -1914,8 +1963,18 @@ code {
         box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
     }
 
-    .nav-drag-handle {
-        display: none; /* No drag on mobile */
+    body.layout-intro .global-nav-controls {
+        top: auto;
+        right: 0;
+        height: auto;
+        padding: 12px 16px;
+        gap: 10px;
+        border-radius: 0;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    body.layout-intro .global-nav-btn.reveal {
+        margin-left: 0;
     }
 
     .global-nav-btn {

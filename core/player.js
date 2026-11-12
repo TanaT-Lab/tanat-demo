@@ -695,14 +695,21 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// The visible area for framing: between the bottom of the fixed header and the
-// top of the floating nav controls (which sit at the bottom of the viewport).
+// The visible area for framing: between the bottom of the fixed header (progress
+// bar included) and the bottom of the viewport on desktop, where the controls
+// live in the header. On mobile the controls are a sticky footer, so the visible
+// area ends at the footer's top edge.
 function framingBounds() {
     const header = document.querySelector('.main-header');
     const headerBottom = header && header.getBoundingClientRect().height > 0
         ? header.getBoundingClientRect().bottom : 0;
-    const nav = document.querySelector('.global-nav-controls');
-    const bottom = nav ? nav.getBoundingClientRect().top : window.innerHeight;
+    let bottom = window.innerHeight;
+    if (window.matchMedia('(max-width: 767px)').matches) {
+        const nav = document.querySelector('.global-nav-controls');
+        if (nav && nav.getBoundingClientRect().height > 0) {
+            bottom = nav.getBoundingClientRect().top;
+        }
+    }
     return { top: headerBottom, bottom: bottom };
 }
 
@@ -841,14 +848,19 @@ function stopAndShow() {
     updateShowButton();
 }
 
+function setPauseButton(paused) {
+    const pauseBtn = document.getElementById('global-pause-btn');
+    if (!pauseBtn) return;
+    const label = pauseBtn.querySelector('.nav-label');
+    if (label) label.textContent = paused ? 'Resume' : 'Pause';
+    pauseBtn.classList.toggle('playing', paused);
+    pauseBtn.title = paused ? 'Resume (Space)' : 'Pause (Space)';
+}
+
 function togglePause() {
     isPaused = !isPaused;
     
-    const pauseBtn = document.getElementById('global-pause-btn');
-    if (pauseBtn) {
-        pauseBtn.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
-        pauseBtn.classList.toggle('playing', isPaused);
-    }
+    setPauseButton(isPaused);
     
     if (audioElement) {
         if (isPaused) audioElement.pause();
@@ -866,11 +878,8 @@ function forceCompleteCurrentStation() {
         audioElement.currentTime = 0;
     }
     
-    const pauseBtn = document.getElementById('global-pause-btn');
-    if (pauseBtn) {
-        pauseBtn.textContent = '⏸ Pause';
-        pauseBtn.classList.remove('playing');
-    }
+    setPauseButton(false);
+    resetProgressBar();
     
     if (currentLayout === 'demo' && currentStation >= 1) {
         forceCompleteStationDisplay();
@@ -1022,6 +1031,7 @@ async function tryStartAudio() {
     
     const track = demoBasePath + demoConfig.intro.audio;
     audioElement.src = track;
+    resetProgressBar();
     
     try {
         await audioElement.play();
@@ -1052,6 +1062,7 @@ function playAudioForStation(stationNum) {
     
     if (track) {
         audioElement.src = track;
+        resetProgressBar();
         // Try to play - if blocked by autoplay policy, retry on user interaction
         const playPromise = audioElement.play();
         if (playPromise !== undefined) {
@@ -1182,49 +1193,69 @@ function goBackToLanding() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DRAGGABLE NAV BAR
+// NARRATION PROGRESS BAR + KEYBOARD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function initDraggableNav() {
-    const navControls = document.getElementById('global-nav-controls');
-    const dragHandle = document.querySelector('.nav-drag-handle');
-    
-    if (!navControls || !dragHandle) return;
-    
-    let isDragging = false;
-    let offsetX, offsetY;
-    
-    dragHandle.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        navControls.classList.add('dragging');
-        
-        const rect = navControls.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
-        
-        e.preventDefault();
+function resetProgressBar() {
+    const bar = document.getElementById('progress-bar');
+    if (bar) bar.style.width = '0%';
+}
+
+function updateProgressBar() {
+    const bar = document.getElementById('progress-bar');
+    if (!bar || !audioElement || !audioElement.duration) {
+        if (bar) bar.style.width = '0%';
+        return;
+    }
+    const pct = (audioElement.currentTime / audioElement.duration) * 100;
+    bar.style.width = Math.min(100, Math.max(0, pct)) + '%';
+}
+
+// Drive the narration progress bar from the audio element's position. The width
+// follows currentTime / duration, resets to 0 when a track starts, and fills to
+// 100% when the track ends. The container itself is hidden (via CSS) on the
+// transition screen.
+function initProgressBar() {
+    if (!audioElement) return;
+    audioElement.addEventListener('timeupdate', updateProgressBar);
+    audioElement.addEventListener('loadedmetadata', updateProgressBar);
+    audioElement.addEventListener('ended', () => {
+        const bar = document.getElementById('progress-bar');
+        if (bar) bar.style.width = '100%';
     });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        
-        const x = e.clientX - offsetX;
-        const y = e.clientY - offsetY;
-        
-        // Keep within viewport bounds
-        const maxX = window.innerWidth - navControls.offsetWidth;
-        const maxY = window.innerHeight - navControls.offsetHeight;
-        
-        navControls.style.left = Math.max(0, Math.min(x, maxX)) + 'px';
-        navControls.style.top = Math.max(0, Math.min(y, maxY)) + 'px';
-        navControls.style.right = 'auto';
-        navControls.style.bottom = 'auto';
-    });
-    
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        navControls.classList.remove('dragging');
-    });
+}
+
+// Keyboard drives the demo (for the presenter / a clicker). Ignored when focus
+// is in an input or textarea. preventDefault keeps the page from scrolling on
+// the handled keys. On the transition screen only the Start button's own
+// Enter/Space handling applies; no other key does anything.
+function handleKeyboard(e) {
+    const tag = (e.target && e.target.tagName ? e.target.tagName : '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+    if (currentLayout === 'transition') return;
+
+    switch (e.key) {
+        case ' ':
+        case 'Spacebar':
+            e.preventDefault();
+            togglePause();
+            break;
+        case 'ArrowRight':
+        case 'PageDown':
+            e.preventDefault();
+            goToNextStep();
+            break;
+        case 'ArrowLeft':
+        case 'PageUp':
+            e.preventDefault();
+            goToPreviousStep();
+            break;
+        case 'r':
+        case 'R':
+            e.preventDefault();
+            stopAndShow();
+            break;
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1304,7 +1335,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     audioElement = document.getElementById('demo-audio');
     if (audioElement) {
         audioElement.addEventListener('ended', onAudioEnded);
+        initProgressBar();
     }
+
+    // Keyboard drives the demo (Space/arrows/r). No key exits.
+    document.addEventListener('keydown', handleKeyboard);
     
     // Load demo config
     const demoId = getDemoIdFromUrl();
@@ -1350,9 +1385,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.getElementById('global-skip-btn')?.addEventListener('click', stopAndShow);
     document.getElementById('global-prev-btn')?.addEventListener('click', goToPreviousStep);
     document.getElementById('global-next-btn')?.addEventListener('click', goToNextStep);
-    
-    // Initialize draggable navigation bar
-    initDraggableNav();
     
     // Show the Start/Back buttons only once the demo is really ready: the intro
     // audio and every figure are preloaded, and at least MIN_READY_MS have
