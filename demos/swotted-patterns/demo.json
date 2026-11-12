@@ -1,0 +1,8 @@
+{
+  "id": "swotted-patterns",
+  "title": "Clinical Temporal Patterns",
+  "subtitle": "MIMIC-IV Dataset, SWoTTeD",
+  "description": "Learn recurring temporal patterns of procedures with a deep learning model (SWoTTeD) fed by TanaT tensors",
+  "icon": "🧬",
+  "tags": ["deep learning", "tensor", "SWoTTeD", "MIMIC-IV"]
+}
