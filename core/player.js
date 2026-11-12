@@ -1228,6 +1228,72 @@ function initDraggableNav() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// READY / PRELOAD
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// A demo is "ready to start" once the intro narration is preloaded and every
+// figure <img> has loaded. The step mp3s are NOT awaited: they load during the
+// intro. Two timings apply on top: the buttons never appear before
+// MIN_READY_MS since the transition screen appeared (so the logo does not just
+// flash), and READY_SAFETY_MS guarantees the demo never gets stuck on the
+// spinner even if a preload hangs.
+const MIN_READY_MS = 800;
+const READY_SAFETY_MS = 8000;
+
+/**
+ * Promise that resolves once the intro narration mp3 can play through (or
+ * fails -- a load error still lets the demo proceed, exactly as the safety
+ * net does).
+ */
+function preloadIntroAudio() {
+    const intro = demoConfig?.intro;
+    if (!audioElement || !intro?.audio) return Promise.resolve();
+    const track = demoBasePath + intro.audio;
+    audioElement.src = track;
+    return new Promise(resolve => {
+        const done = () => resolve();
+        if (audioElement.readyState >= 3) { resolve(); return; }
+        audioElement.addEventListener('canplaythrough', done, { once: true });
+        audioElement.addEventListener('error', done, { once: true });
+    });
+}
+
+/**
+ * Resolve once every figure <img> of every station has loaded (or failed).
+ * Calls onProgress(resolved, total) as each completes so the transition text
+ * can report "Loading figures (3/5)...". waitForFigure() resolves on load or
+ * error, so this never rejects.
+ */
+function preloadFigures(onProgress) {
+    const imgs = Array.from(document.querySelectorAll('.figure-output img'));
+    const total = imgs.length;
+    if (total === 0) return Promise.resolve();
+    let resolved = 0;
+    return Promise.all(imgs.map(img =>
+        waitForFigure(img).then(() => {
+            resolved++;
+            onProgress(resolved, total);
+        })
+    ));
+}
+
+/**
+ * Wait until the demo is ready to start: intro audio and figures preloaded,
+ * and at least MIN_READY_MS since the transition screen appeared. READY_SAFETY_MS
+ * short-circuits the preload wait so the demo can never be stuck on the
+ * spinner. onProgress is forwarded to preloadFigures for the loading text.
+ */
+async function waitUntilReady(onProgress) {
+    const shownAt = Date.now();
+    const minRemaining = () => Math.max(0, MIN_READY_MS - (Date.now() - shownAt));
+    await Promise.race([
+        Promise.all([preloadIntroAudio(), preloadFigures(onProgress)]),
+        sleep(READY_SAFETY_MS),
+    ]).catch(() => {});
+    await sleep(minRemaining());
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1267,16 +1333,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Start at transition screen (logo spinning)
     showLayout('transition');
     
-    // Hide actions initially
+    // Hide actions initially (also hidden by critical CSS until this runs).
     const transitionActions = document.getElementById('transition-actions');
     if (transitionActions) transitionActions.style.display = 'none';
-    
-    // After 1.5s, show the action buttons and hide loading text
-    setTimeout(() => {
-        const transitionText = document.getElementById('transition-text');
-        if (transitionActions) transitionActions.style.display = 'flex';
-        if (transitionText) transitionText.style.display = 'none';
-    }, 1500);
     
     // Event listeners for transition screen
     document.getElementById('transition-back-btn')?.addEventListener('click', goBackToLanding);
@@ -1294,6 +1353,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Initialize draggable navigation bar
     initDraggableNav();
+    
+    // Show the Start/Back buttons only once the demo is really ready: the intro
+    // audio and every figure are preloaded, and at least MIN_READY_MS have
+    // passed since the transition screen appeared (so the logo never just
+    // flashes on a fast connection). READY_SAFETY_MS guarantees the demo never
+    // gets stuck on the spinner. While waiting, #transition-text reports what
+    // is loading. This is async only in the sense that the button reveal
+    // happens when the preloads settle; the rest of the player is untouched.
+    const transitionText = document.getElementById('transition-text');
+    const setLoadingText = (t) => {
+        if (transitionText) transitionText.textContent = t;
+    };
+    setLoadingText('Loading narration...');
+    await waitUntilReady((resolved, total) => {
+        setLoadingText(`Loading figures (${resolved}/${total})...`);
+    });
+    if (transitionActions) transitionActions.style.display = 'flex';
+    if (transitionText) transitionText.style.display = 'none';
     
     console.log('=== Player Ready ===');
 });
