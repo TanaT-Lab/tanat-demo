@@ -19,6 +19,7 @@ really executed: what the audience sees is what ran.
 | Demo | Description |
 |------|-------------|
 | **mimic-clustering** | Hospital readmission pattern analysis using MIMIC-IV data |
+| **swotted-patterns** | TanaT bridges tools: trajectories to a PyTorch-ready tensor, temporal patterns learned with SWoTTeD, and back into TanaT |
 
 ## Quick Start
 
@@ -30,6 +31,16 @@ python run.py --port 9000         # custom port
 python run.py --regenerate        # force regenerate all outputs
 python run.py --no-browser        # don't open browser
 ```
+
+The **swotted-patterns** demo needs extras (CPU PyTorch, Lightning, SWoTTeD).
+`generate_all.py` runs every demo, so install them too:
+
+```bash
+pip install -r requirements-swotted.txt
+pip install --no-deps swotted==1.0.3   # its declared deps pull CUDA torch (~6 GB)
+```
+
+SWoTTeD is LGPL-3: imported, not redistributed.
 
 ## Architecture
 
@@ -48,7 +59,7 @@ tanat-demo/
 ├── tools/tts.py            # SCRIPT.md sections -> audio/*.mp3 (Kokoro, CPU)
 ├── tests/                  # pytest (+ Playwright headless for the front)
 ├── assets/                 # Shared assets (logo)
-├── data/                   # Shared data (mimic_admissions_pool.csv)
+├── data/                   # Shared data (mimic_admissions_pool.csv, mimic_procedures.csv)
 │
 └── demos/                  # Individual demos
     ├── index.json          # Generated manifest (gitignored)
@@ -106,6 +117,7 @@ it publishes the site to GitHub Pages — enable it in
 
 - Python 3.10+
 - `tanat==0.10.4` (see `requirements.txt`)
+- swotted-patterns only: `requirements-swotted.txt` + `swotted==1.0.3` (see Quick Start)
 
 ## License
 
