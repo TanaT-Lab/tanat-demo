@@ -229,3 +229,50 @@ def test_progress_bar_width_grows_with_audio(server):
             f"progress bar width did not grow ({w1} -> {w2}) while audio plays"
         )
         browser.close()
+
+
+def test_mobile_footer_fits_screen_during_station1(server):
+    """On mobile (390x844) the sticky footer controls must fit the screen width
+    (Attempt 2 regression: icon + label per button overflowed, cutting Exit and
+    Reveal off) and every button must stay inside the viewport."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            args=["--autoplay-policy=no-user-gesture-required"]
+        )
+        pg = browser.new_page(viewport={"width": 390, "height": 844})
+        pg.goto(f"http://127.0.0.1:{PORT}/player.html?demo=mimic-clustering")
+        enter_demo(pg)
+        wait_station_complete(pg, 1)
+
+        assert pg.evaluate("window.innerWidth") <= 767, "not a mobile viewport"
+
+        metrics = pg.evaluate(
+            """(() => {
+                const c = document.getElementById('global-nav-controls');
+                const cw = c.clientWidth, sw = c.scrollWidth;
+                const buttons = Array.from(document.querySelectorAll('.global-nav-btn'))
+                    .map(b => {
+                        const r = b.getBoundingClientRect();
+                        return { left: r.left, right: r.right,
+                                 top: r.top, bottom: r.bottom,
+                                 width: r.width, height: r.height };
+                    });
+                return { cw, sw, buttons, vw: window.innerWidth,
+                         vh: window.innerHeight };
+            })()"""
+        )
+        assert metrics["sw"] <= metrics["cw"], (
+            f"footer overflows: scrollWidth {metrics['sw']} > clientWidth "
+            f"{metrics['cw']} at 390x844"
+        )
+        for b in metrics["buttons"]:
+            assert 0 <= b["left"] and b["right"] <= metrics["vw"], (
+                f"button {b} outside viewport width at 390x844"
+            )
+            assert 0 <= b["top"] and b["bottom"] <= metrics["vh"], (
+                f"button {b} outside viewport height at 390x844"
+            )
+            assert b["height"] >= 44, (
+                f"button height {b['height']} < 44px touch target at 390x844"
+            )
+        browser.close()

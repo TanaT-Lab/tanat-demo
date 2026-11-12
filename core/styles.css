@@ -1979,20 +1979,35 @@ code {
 
     .global-nav-btn {
         flex: 1;
-        max-width: 100px;
-        padding: 12px 8px;
+        max-width: none;
+        padding: 12px 0;
         font-size: 12px;
-        min-width: auto;
+        min-width: 0;
         min-height: 44px; /* Touch-friendly size */
+        gap: 0;
+        justify-content: center;
+    }
+
+    /* Icon-only buttons on mobile keep the footer within the screen width:
+       the five buttons (with their text labels) are wider than a 390px phone,
+       cutting Exit and Reveal off. Hiding the label keeps the same buttons
+       (the SVG + title remain; aria-label on each button names it for AT). */
+    .global-nav-btn .nav-label {
+        display: none;
     }
 
     .global-nav-btn.back {
-        flex: 0.7;
+        flex: 1;
         margin-right: 0;
     }
 
     .global-nav-btn.reveal {
         margin-left: 0;
+    }
+
+    .global-nav-btn.pause .play-icon,
+    .global-nav-btn.pause .pause-icon {
+        display: inline-block;
     }
 
     /* === INTRO SCREEN MOBILE === */
