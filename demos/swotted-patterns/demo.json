@@ -1,8 +1,8 @@
 {
   "id": "swotted-patterns",
-  "title": "Clinical Temporal Patterns",
-  "subtitle": "MIMIC-IV Dataset, SWoTTeD",
-  "description": "Learn recurring temporal patterns of procedures with a deep learning model (SWoTTeD) fed by TanaT tensors",
+  "title": "From trajectories to tensors",
+  "subtitle": "Turn care pathways into PyTorch-ready tensors, learn temporal patterns with SWoTTeD, and bring them back into TanaT.",
+  "description": "TanaT bridges tools: export trajectories as a tensor, learn temporal patterns with SWoTTeD, then bring the result back into TanaT as a static feature",
   "icon": "🧬",
-  "tags": ["deep learning", "tensor", "SWoTTeD", "MIMIC-IV"]
+  "tags": ["tensor", "interoperability", "SWoTTeD", "MIMIC-IV"]
 }
