@@ -88,7 +88,7 @@ def test_intro_notes_follow_resolved_anchor_times(browser):
         "document.getElementById('demo-audio').playbackRate = 8"
     )
     page.wait_for_function(
-        f"document.getElementById('intro-notepad').children.length === {len(notes)}",
+        f"window.__seen && window.__seen.length === {len(notes)}",
         timeout=30000,
     )
 
