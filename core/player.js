@@ -1492,9 +1492,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Start at transition screen (logo spinning)
     showLayout('transition');
     
-    // Hide actions initially (also hidden by critical CSS until this runs).
+    // Actions are hidden by CSS (display: none) until the demo is ready.
     const transitionActions = document.getElementById('transition-actions');
-    if (transitionActions) transitionActions.style.display = 'none';
     
     // Event listeners for transition screen
     document.getElementById('transition-back-btn')?.addEventListener('click', goBackToLanding);
