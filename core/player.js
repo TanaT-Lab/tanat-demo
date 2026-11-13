@@ -84,6 +84,9 @@ async function loadDemoConfig(demoId) {
     demoConfig.title = demoMeta.title;
     demoConfig.subtitle = demoMeta.subtitle;
 
+    // Outro paragraph offsets (beat switch of the final view)
+    await fvLoadOutroTiming();
+
     console.log('Demo config loaded:', demoConfig.id);
     return demoConfig;
 }
@@ -1259,17 +1262,10 @@ function showFullScript() {
         }
     });
     
-    // Final view (core/final-view.js) replaces the stations
-    showFinalView();
-    
-    // Add full-script-view class to body for CSS targeting
+    // Final view (core/final-view.js) replaces the stations; the class hides
+    // the sidebar and gives the view the full width.
     document.body.classList.add('full-script-view');
-    
-    // Show explore section in sidebar, hide pipeline
-    const pipelineSection = document.getElementById('sidebar-pipeline-section');
-    const exploreSection = document.getElementById('sidebar-explore-section');
-    if (pipelineSection) pipelineSection.style.display = 'none';
-    if (exploreSection) exploreSection.style.display = 'block';
+    showFinalView();
     
     document.getElementById('spacer')?.classList.add('hidden');
     
@@ -1288,12 +1284,6 @@ function backToScrollView() {
     
     // Remove full-script-view class from body
     document.body.classList.remove('full-script-view');
-    
-    // Show pipeline section in sidebar, hide explore
-    const pipelineSection = document.getElementById('sidebar-pipeline-section');
-    const exploreSection = document.getElementById('sidebar-explore-section');
-    if (pipelineSection) pipelineSection.style.display = 'block';
-    if (exploreSection) exploreSection.style.display = 'none';
     
     document.getElementById('spacer')?.classList.remove('hidden');
     
