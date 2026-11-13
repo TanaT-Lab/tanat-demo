@@ -97,6 +97,11 @@ body.full-script-view #final-view {
 .fv-chip {
     flex: 1 1 auto;
     min-width: 0;
+    /* A <button> centres its content vertically: pin it to the top so the
+       name lines up across chips with 0, 1 or 2 api lines. */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
     text-align: left;
     cursor: pointer;
     color: inherit;
