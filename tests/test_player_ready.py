@@ -83,3 +83,74 @@ def test_start_button_waits_for_slow_intro_audio(server):
             assert pg.is_visible("#transition-start-btn")
         finally:
             browser.close()
+
+
+SAMPLER = """
+(() => {
+  window.__samples = [];
+  window.__readyAt = null;
+  const origLog = console.log;
+  console.log = function (...args) {
+    if (window.__readyAt === null && args[0] === '=== Player Ready ===') {
+      window.__readyAt = performance.now();
+    }
+    return origLog.apply(this, args);
+  };
+  const tick = () => {
+    const el = document.getElementById('transition-actions');
+    let visible = false;
+    if (el) {
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      visible = cs.display !== 'none' && parseFloat(cs.opacity) > 0
+        && r.width > 0 && r.height > 0;
+    }
+    window.__samples.push([performance.now(), visible]);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();
+"""
+
+
+def test_buttons_never_visible_before_ready(server):
+    """The Back / Start buttons must not flash while the config is still
+    loading: they are hidden from the very first frame (the critical CSS must
+    not be overridden by core/styles.css), shown once when the demo is ready,
+    and never go visible -> hidden -> visible."""
+    with sync_playwright() as p:
+        browser = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        pg = browser.new_page()
+        pg.add_init_script(SAMPLER)
+
+        def slow_config(route):
+            # Hold config.js ~1 s so the window before the script hides/shows
+            # the buttons is wide and deterministic.
+            time.sleep(1.0)
+            route.continue_()
+
+        pg.route("**/mimic-clustering/config.js", slow_config)
+        try:
+            pg.goto(
+                f"http://127.0.0.1:{PORT}/player.html?demo=mimic-clustering",
+                wait_until="domcontentloaded",
+            )
+            pg.wait_for_function("window.__readyAt !== null", timeout=10000)
+            # Let the fadeIn finish and a few more frames be sampled.
+            pg.wait_for_timeout(800)
+            ready_at = pg.evaluate("window.__readyAt")
+            samples = pg.evaluate("window.__samples")
+        finally:
+            browser.close()
+
+    assert len(samples) > 20, "sampler produced too few frames"
+    early = [t for t, v in samples if v and t < ready_at]
+    assert not early, (
+        f"buttons visible before ready: first at {early[0]:.0f} ms, "
+        f"{len(early)} frames, ready at {ready_at:.0f} ms"
+    )
+    assert samples[-1][1], "buttons not visible after ready"
+
+    states = [v for _, v in samples]
+    transitions = sum(1 for a, b in zip(states, states[1:]) if a != b)
+    assert transitions == 1, f"visibility toggled {transitions} times, expected 1"

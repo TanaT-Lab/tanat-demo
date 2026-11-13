@@ -379,7 +379,8 @@ body {
 }
 
 .transition-actions {
-    display: flex;
+    /* Hidden until player.js sets display:flex once the demo is ready. */
+    display: none;
     gap: 1rem;
     margin-top: 1.5rem;
     animation: fadeIn 0.5s ease-out;
