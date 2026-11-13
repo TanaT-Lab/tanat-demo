@@ -54,11 +54,12 @@ tanat-demo/
 ├── core/                   # Shared front (no build step)
 │   ├── styles.css          # Dark terminal theme
 │   ├── player.js           # Player logic (typewriter, navigation, audio)
+│   ├── final-view.js/.css  # Final screen: recap, call to action, Full code panel
 │   └── landing.js          # Landing page controller
 │
 ├── tools/tts.py            # SCRIPT.md sections -> audio/*.mp3 (Kokoro, CPU)
 ├── tests/                  # pytest (+ Playwright headless for the front)
-├── assets/                 # Shared assets (logo)
+├── assets/                 # Shared assets (logo, qr-docs.svg)
 ├── data/                   # Shared data (mimic_admissions_pool.csv, mimic_procedures.csv)
 │
 └── demos/                  # Individual demos
@@ -96,6 +97,14 @@ tanat-demo/
 6. **Check**: `python generate_all.py my-demo`, then `python run.py`.
 
 The landing page picks the demo up from `demos/index.json`: nothing else to register.
+
+The final screen needs no per-demo code: it reads `stations[].name/api`, `outro.takeaways` and the
+paragraph offsets of `## end` in `audio/manifest.json`. Its QR code (`assets/qr-docs.svg`, dark on a
+light tile, 4-module quiet zone, error correction M) is generated once with:
+
+```bash
+uv run --with segno python -c "import segno; segno.make('https://tanat-lab.github.io/TanaT/', error='m').save('assets/qr-docs.svg', border=4, dark='#000', light='#fff', xmldecl=False, omitsize=True, title='QR code: TanaT documentation')"
+```
 
 ## Development
 
