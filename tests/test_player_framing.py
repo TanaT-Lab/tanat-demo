@@ -10,6 +10,7 @@ import functools
 import http.server
 import os
 import threading
+import time
 
 import pytest
 
@@ -178,5 +179,181 @@ def test_station4_figures_side_by_side_then_stack(server, viewport):
             assert a["left"] == c["left"], (
                 f"4a left {a['left']} != 4c left {c['left']} at {viewport}"
             )
+
+        browser.close()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Reading-line framing while a station types
+# ═══════════════════════════════════════════════════════════════════════════════
+# While stations 1, 3 and 5 type (real typing, sampled every ~250 ms): once the
+# page has started following, the bottom of the code being typed stays between
+# framingBounds().top and the reading line + 1 line height (~30 px), never below
+# the viewport; window.scrollY never decreases within a block. At each step
+# start the station header's top is within 40 px of framingBounds().top.
+
+TYPING_STATIONS = [1, 3, 5]
+
+
+def _real_sleep(page):
+    page.evaluate(
+        "() => { window.sleep = (ms) => new Promise(r => setTimeout(r, ms)); }"
+    )
+
+
+def _instant_sleep(page):
+    page.evaluate(
+        "() => { window.sleep = (ms) => new Promise(r => setTimeout(r, 0)); }"
+    )
+
+
+def _typing_sample(page, s):
+    """Sample the code element currently being typed in station `s` (the lowest
+    non-empty code block's bottom), its scrollY, the framing bounds and the
+    station header's top."""
+    return page.evaluate(
+        f"""(() => {{
+            const st = document.getElementById('station-{s}');
+            const codes = Array.from(st.querySelectorAll('pre code'));
+            let best = null, bestBottom = -Infinity;
+            for (const c of codes) {{
+                if (!c.textContent.trim()) continue;
+                const b = c.getBoundingClientRect().bottom;
+                if (b > bestBottom) {{ bestBottom = b; best = c; }}
+            }}
+            const header = document.querySelector('.main-header');
+            const headerBottom = header && header.getBoundingClientRect().height > 0
+                ? header.getBoundingClientRect().bottom : 0;
+            let bottom = window.innerHeight;
+            if (window.matchMedia('(max-width: 767px)').matches) {{
+                const nav = document.querySelector('.global-nav-controls');
+                if (nav && nav.getBoundingClientRect().height > 0) {{
+                    bottom = nav.getBoundingClientRect().top;
+                }}
+            }}
+            const sHdr = st.querySelector('.station-header');
+            return {{
+                id: best ? best.id : null,
+                bottom: bestBottom,
+                scrollY: window.scrollY,
+                boundsTop: headerBottom,
+                boundsBottom: bottom,
+                headerTop: sHdr ? sHdr.getBoundingClientRect().top : null,
+            }};
+        }})()"""
+    )
+
+
+def _assert_reading_line_while_typing(page, s, viewport):
+    """Sample every ~250 ms while station `s` types and check the reading-line
+    invariant and that scrollY never decreases within a block."""
+    per_block = {}
+    max_header_top = None
+    bounds_top = None
+    while page.evaluate(f"currentStation === {s} && !isDisplayComplete"):
+        sample = _typing_sample(page, s)
+        if sample["id"]:
+            bottom = sample["bottom"]
+            ft = sample["boundsTop"]
+            fb = sample["boundsBottom"]
+            reading_line = ft + 0.55 * (fb - ft)
+
+            # The reading-line follow only ever scrolls the page down, so the
+            # station header's top only moves up (smaller) as typing goes on.
+            # Its step-start position (top of the visible area) is therefore the
+            # largest top observed -- the first samples, before follow has scrolled
+            # the header off-screen, sit closest to it.
+            if sample["headerTop"] is not None:
+                if max_header_top is None or sample["headerTop"] > max_header_top:
+                    max_header_top = sample["headerTop"]
+                bounds_top = ft
+
+            blk = per_block.setdefault(
+                sample["id"], {"started": False, "prevY": None, "below_since": None}
+            )
+            if blk["started"] and blk["prevY"] is not None:
+                assert sample["scrollY"] >= blk["prevY"] - 0.5, (
+                    f"window.scrollY decreased in station {s} block {sample['id']} "
+                    f"({sample['scrollY']} < {blk['prevY']}) at {viewport}"
+                )
+            if bottom >= reading_line:
+                in_band = ft <= bottom <= reading_line + 30
+                if in_band:
+                    blk["started"] = True
+                    blk["below_since"] = None
+                elif not blk["started"]:
+                    # A block that starts typing right under a tall output is
+                    # already below the line: the page is still catching up.
+                    # That is allowed, but only for a bounded time.
+                    now = time.monotonic()
+                    if blk["below_since"] is None:
+                        blk["below_since"] = now
+                    assert now - blk["below_since"] <= 1.5, (
+                        f"station {s} block {sample['id']} bottom {bottom} still "
+                        f"outside [{ft}, {reading_line + 30}] (reading line "
+                        f"{reading_line}) 1.5 s after crossing it at {viewport}"
+                    )
+                else:
+                    raise AssertionError(
+                        f"station {s} block {sample['id']} bottom {bottom} outside "
+                        f"[{ft}, {reading_line + 30}] (reading line {reading_line}) "
+                        f"at {viewport}"
+                    )
+                if blk["started"]:
+                    assert bottom <= fb, (
+                        f"station {s} block {sample['id']} bottom {bottom} below "
+                        f"viewport bottom {fb} at {viewport}"
+                    )
+                    blk["prevY"] = sample["scrollY"]
+        page.wait_for_timeout(250)
+    assert max_header_top is not None, (
+        f"station {s} never produced a typing sample at {viewport}"
+    )
+    assert abs(max_header_top - bounds_top) <= 40, (
+        f"station {s} step-start header top {max_header_top} not within 40px of "
+        f"framingBounds().top {bounds_top} at {viewport}"
+    )
+
+
+@pytest.mark.parametrize("viewport", VIEWPORTS)
+def test_reading_line_while_typing(server, viewport):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            args=["--autoplay-policy=no-user-gesture-required"]
+        )
+        pg = browser.new_page(viewport={"width": viewport[0], "height": viewport[1]})
+        pg.goto(f"http://127.0.0.1:{PORT}/player.html?demo=mimic-clustering")
+        pg.wait_for_selector("#transition-start-btn", state="visible", timeout=5000)
+        pg.click("#transition-start-btn")
+        pg.wait_for_timeout(500)
+        # The test drives the stations itself: without this, a narration that
+        # ends between "station done" and the Next click auto-advances too, and
+        # the click skips a station.
+        pg.evaluate("audioElement.removeEventListener('ended', onAudioEnded)")
+        pg.click("#global-next-btn")
+
+        s = 1
+        n = pg.evaluate("demoConfig.stations.length")
+        while s <= n:
+            pg.wait_for_function(
+                f"currentStation === {s} && isDisplayComplete === true",
+                timeout=240000,
+            )
+            nxt = s + 1
+            if nxt > n:
+                break
+            target = nxt in TYPING_STATIONS
+            if target:
+                _real_sleep(pg)
+            else:
+                _instant_sleep(pg)
+            pg.click("#global-next-btn")
+            if target:
+                pg.wait_for_function(
+                    f"currentStation === {nxt} && isTyping === true && !isDisplayComplete",
+                    timeout=10000,
+                )
+                _assert_reading_line_while_typing(pg, nxt, viewport)
+            s = nxt
 
         browser.close()
