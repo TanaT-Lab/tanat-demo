@@ -54,11 +54,12 @@ tanat-demo/
 ├── core/                   # Shared front (no build step)
 │   ├── styles.css          # Dark terminal theme
 │   ├── player.js           # Player logic (typewriter, navigation, audio)
+│   ├── final-view.js/.css  # Final screen: recap, call to action, Full code panel
 │   └── landing.js          # Landing page controller
 │
 ├── tools/tts.py            # SCRIPT.md sections -> audio/*.mp3 (Kokoro, CPU)
 ├── tests/                  # pytest (+ Playwright headless for the front)
-├── assets/                 # Shared assets (logo)
+├── assets/                 # Shared assets (logo, qr-docs.svg)
 ├── data/                   # Shared data (mimic_admissions_pool.csv, mimic_procedures.csv)
 │
 └── demos/                  # Individual demos
