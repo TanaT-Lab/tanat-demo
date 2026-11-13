@@ -1,8 +1,9 @@
-# data/mimic_admissions_pool.csv — provenance
+# data/*.csv — provenance
 
-`mimic_admissions_pool.csv` is a small extraction of the **MIMIC-IV Clinical
-Database Demo** used by the demo pipeline. This file documents where the data
-comes from, how it is rebuilt, and under what licence it is distributed.
+`mimic_admissions_pool.csv` and `mimic_procedures.csv` are small extractions of
+the **MIMIC-IV Clinical Database Demo** used by the demo pipelines. This file
+documents where the data comes from, how it is rebuilt, and under what licence
+it is distributed. Both files share the same source and licence.
 
 ## Source
 
@@ -41,6 +42,28 @@ From the repo root:
 uv run -q --no-project --with-requirements requirements.txt python data/build_csv.py
 # compare with the versioned file without writing (exit 0 if equal)
 uv run -q --no-project --with-requirements requirements.txt python data/build_csv.py --check
+```
+
+## mimic_procedures.csv
+
+The 722 coded procedures (`hosp/procedures_icd`) of the 92 demo patients who
+have at least one, one row per event: `subject_id, time (day), icd_code,
+icd_version, long_title`. `long_title` comes from `hosp/d_icd_procedures`,
+joined on `(icd_code, icd_version)` (ICD-9 and ICD-10 codes share the column).
+Read `icd_code` and `subject_id` as strings: `0331` is not a number.
+
+```sql
+SELECT p.subject_id, substr(p.chartdate, 1, 10), p.icd_code, p.icd_version,
+       COALESCE(d.long_title, '')
+FROM "hosp/procedures_icd" p
+LEFT JOIN "hosp/d_icd_procedures" d
+  ON d.icd_code = p.icd_code AND d.icd_version = p.icd_version
+ORDER BY p.subject_id, p.chartdate, CAST(p.hadm_id AS INTEGER), CAST(p.seq_num AS INTEGER);
+```
+
+```bash
+uv run -q --no-project --with-requirements requirements.txt python data/build_procedures_csv.py
+uv run -q --no-project --with-requirements requirements.txt python data/build_procedures_csv.py --check
 ```
 
 ## Licence

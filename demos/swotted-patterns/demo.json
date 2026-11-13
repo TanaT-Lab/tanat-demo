@@ -1,0 +1,8 @@
+{
+  "id": "swotted-patterns",
+  "title": "From trajectories to tensors",
+  "subtitle": "To PyTorch with SWoTTeD, and back to TanaT",
+  "description": "TanaT bridges tools: export trajectories as a tensor, learn temporal patterns with SWoTTeD, then bring the result back into TanaT as a static feature",
+  "icon": "🧬",
+  "tags": ["tensor", "interoperability", "SWoTTeD", "MIMIC-IV"]
+}

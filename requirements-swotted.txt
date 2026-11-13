@@ -1,0 +1,13 @@
+# Extras of the swotted-patterns demo (SWoTTeD patterns learned from a TanaT tensor).
+# Install after requirements.txt, then SWoTTeD itself without its dependencies
+# (its declared deps pull CUDA torch, ~6 GB; CPU torch is enough here):
+#
+#   pip install -r requirements.txt -r requirements-swotted.txt
+#   pip install --no-deps swotted==1.0.3
+#
+# SWoTTeD is LGPL-3: imported, not redistributed.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0
+lightning==2.6.6
+munkres==3.0.0
+omegaconf==2.4.0
