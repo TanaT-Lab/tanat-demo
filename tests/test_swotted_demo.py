@@ -134,6 +134,14 @@ def test_demo_plays_to_the_final_screen(server, outputs):
         browser = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
         pg = browser.new_page(viewport={"width": 1920, "height": 1080})
         pg.on("pageerror", lambda e: errors.append(str(e)))
+
+        def short_outro(route):  # 2nd paragraph of `## end` at 2 s: beat 2 comes fast
+            resp = route.fetch()
+            data = resp.json()
+            data["sections"]["end"]["offsets"] = [0.0, 2.0]
+            route.fulfill(response=resp, json=data)
+
+        pg.route("**/swotted-patterns/audio/manifest.json", short_outro)
         pg.goto(f"http://127.0.0.1:{PORT}/player.html?demo=swotted-patterns")
         pg.wait_for_selector("#transition-start-btn", state="visible", timeout=8000)
 
@@ -156,12 +164,25 @@ def test_demo_plays_to_the_final_screen(server, outputs):
             timeout=10000,
         )
 
-        gutters = pg.eval_on_selector_all("#fv-notebook .fv-gutter", "els => els.length")
-        assert gutters == sum(len(b) for b in STATION_BLOCKS)
+        # beat 1: headline (no {lines} in the first takeaway) and the 6 steps;
+        # step 5 has no api line, step 6 has two
+        assert pg.inner_text(".fv-headline") == "Trajectories to a tensor in one call"
+        assert pg.locator(".fv-chip").count() == 6
+        assert pg.locator('.fv-chip[data-step="5"] .fv-chip-api').count() == 0
+        assert pg.locator('.fv-chip[data-step="6"] .fv-chip-api span').count() == 2
+
+        # beat 2: takeaways with the computed line count
+        pg.wait_for_function("document.getElementById('final-view').dataset.beat === '2'", timeout=8000)
         takeaways = pg.eval_on_selector_all(".fv-takeaways li", "els => els.map(e => e.textContent)")
         assert len(takeaways) == 3
         assert any(f"{shown_code_lines(outputs)} lines of code" in t for t in takeaways)
         assert not any("{lines}" in t for t in takeaways)
+
+        # Full code panel: one In [n] cell per shown block
+        pg.click(".fv-fullcode")
+        gutters = pg.eval_on_selector_all("#fv-notebook .fv-gutter", "els => els.length")
+        assert gutters == sum(len(b) for b in STATION_BLOCKS)
+        assert pg.is_visible("#fv-notebook .fv-gutter")
         browser.close()
     assert not errors, errors
 
